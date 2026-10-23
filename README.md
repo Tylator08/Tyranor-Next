@@ -71,7 +71,7 @@ PSP 与 Nintendo Switch 游戏通过外置模拟器跳转运行：扫描按 ROM 
 
 ### Winlator 图形加速
 
-全局 Winlator 设置与单游戏覆盖可选「跟随容器配置」、DXVK、WineD3D。选择 WineD3D 后还可指定渲染器（跟随容器、GDI、GL、Vulkan），仅在 WineD3D 下通过 `dxwrapperConfig` 下发；旧版 GL/GDI 预设会在读取时自动迁移为 WineD3D + 对应渲染器，不会丢设置。
+全局 Winlator 设置与单游戏覆盖可选「跟随容器配置」、DXVK、WineD3D。选择 WineD3D 后还可指定渲染器：全局可选跟随容器、GDI、GL、Vulkan，单游戏覆盖另有「跟随全局」继承全局渲染器；仅在 WineD3D 下通过 `dxwrapperConfig` 下发。旧版 GL/GDI 预设会在读取时自动迁移为 WineD3D + 对应渲染器，不会丢设置。
 
 外置启动还支持 Win Components（DX 函数与常用运行库）、音频驱动与自定义环境变量，均按白名单归一后随 `overrides` 下发；Box64 预设可同时下发，开启「写入容器配置」时也会保存。
 

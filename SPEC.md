@@ -61,7 +61,7 @@
 ## 5. 设置、输入与图形
 
 - 应用设置、引擎设置、单游戏设置按作用域分离；单游戏未覆盖的字段跟随引擎全局设置，经 `EngineSettingsResolver` 统一解析。
-- Winlator 全局与单游戏图形加速支持跟随容器配置、DXVK、WineD3D；WineD3D 渲染器可选跟随容器、GDI、GL 或 Vulkan，仅在图形加速为 WineD3D 时经 `overrides.dxwrapperConfig = renderer=<...>` 整项替换接收端的 WineD3D 配置，其它子参数用接收端默认值。旧版 `wined3d_gl` / `wined3d_gdi` 预设只作读入迁移（归一为 WineD3D + 对应渲染器），保存时不再写出。Box64 预设可同时下发，开启写入容器配置时持久化。
+- Winlator 全局与单游戏图形加速支持跟随容器配置、DXVK、WineD3D；WineD3D 渲染器在全局设置可选跟随容器、GDI、GL 或 Vulkan，单游戏覆盖另有「跟随全局」（继承全局渲染器），仅在图形加速为 WineD3D 时经 `overrides.dxwrapperConfig = renderer=<...>` 整项替换接收端的 WineD3D 配置，其它子参数用接收端默认值。旧版 `wined3d_gl` / `wined3d_gdi` 预设只作读入迁移（归一为 WineD3D + 对应渲染器），保存时不再写出。Box64 预设可同时下发，开启写入容器配置时持久化。
 - Winlator 外置启动可经 `overrides` 追加 Win Components（9 项，`0`=内置 Wine / `1`=外置 Windows）、音频驱动（ALSA / PulseAudio）与自定义环境变量（空格分隔 `K=V`），逐项白名单归一、非法值丢弃。
 - 另提供「快捷方式启动」：只传 `container_id` 与 `shortcut_path` 打开 Winlator 中已存在的 `.desktop`，不传目录、主程序与图形参数，也不写入容器配置。容器 ID 未填时按默认容器 1；快捷方式名留空时按启动文件名或游戏标题推导。以上能力需支持该协议的 winlator-cn。
 - 不同引擎提供适用的内核/版本、编码、字体、渲染、存档位置或兼容参数；PC 游戏支持 Winlator 全局与单游戏参数覆盖，安卓游戏不提供引擎参数配置。
