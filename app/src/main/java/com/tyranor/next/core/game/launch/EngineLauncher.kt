@@ -1,5 +1,6 @@
 package com.tyranor.next.core.game.launch
 
+import android.annotation.SuppressLint
 import android.app.ActivityManager
 import android.content.ActivityNotFoundException
 import android.content.Context
@@ -1020,16 +1021,16 @@ object EngineLauncher {
      *
      * 快捷方式文件在 Winlator 私有目录，路径按 Winlator 的固定结构构造：
      * `/data/data/com.winlator/files/rootfs/home/xuser-<containerId>/.wine/drive_c/users/xuser/Desktop/<name>.desktop`。
-     * [containerId] ≤ 0 时按 Winlator 的默认首个容器（1）尝试；多容器用户需在单游戏设置里明确填写。
-     * [shortcutName] 留空时依次退到单游戏「Winlator 快捷方式」覆盖值、启动文件名（无扩展名）、游戏标题。
+     * 容器 ID / 名称在这里的 IO 协程内读取（避免 UI 线程同步读设置）；
+     * 容器未填时按 Winlator 默认首个容器（1），名称留空时退到启动文件名（无扩展名）、游戏标题。
      *
      * 启动优先级低于 [launch]（引擎设置启动）：只在用户显式选择该入口时调用。
      */
+    // Winlator 的快捷方式固定放在它自己的私有目录，路径只能按字面量拼，无法用公开 API 推导。
+    @SuppressLint("SdCardPath")
     suspend fun openWinlatorShortcut(
         context: Context,
         game: ScanGame,
-        containerId: Int = 0,
-        shortcutName: String = "",
     ): LaunchResult =
         withContext(Dispatchers.IO) {
             val target = ExternalEmulatorRegistry.forEngine(game.engine)
@@ -1037,19 +1038,16 @@ object EngineLauncher {
                 ?: return@withContext LaunchResult.Failure.StartFailed(null)
             val path = resolveGameDirectory(context, game)
             // 快捷方式启动使用独立的容器 ID；未填时按 Winlator 默认容器 1。
-            val resolvedContainerId = containerId.takeIf { it > 0 }
-                ?: (PerGameSettingsStore.getStr(
-                    context,
-                    game.uri,
-                    PerGameSettingsStore.F_WINLATOR_SHORTCUT_CONTAINER_ID,
-                )?.trim()?.toIntOrNull() ?: 0).takeIf { it > 0 }
-                ?: 1
-            val explicitName = shortcutName.trim().removeSuffix(".desktop").takeIf { it.isNotEmpty() }
-                ?: PerGameSettingsStore.getStr(
-                    context,
-                    game.uri,
-                    PerGameSettingsStore.F_WINLATOR_SHORTCUT,
-                )?.trim()?.removeSuffix(".desktop")?.takeIf { it.isNotEmpty() }
+            val resolvedContainerId = PerGameSettingsStore.getStr(
+                context,
+                game.uri,
+                PerGameSettingsStore.F_WINLATOR_SHORTCUT_CONTAINER_ID,
+            )?.trim()?.toIntOrNull()?.takeIf { it > 0 } ?: 1
+            val explicitName = PerGameSettingsStore.getStr(
+                context,
+                game.uri,
+                PerGameSettingsStore.F_WINLATOR_SHORTCUT,
+            )?.trim()?.removeSuffix(".desktop")?.takeIf { it.isNotEmpty() }
             val exeBase = path
                 ?.let { YurisLaunchFiles.resolveExeName(game, it) }
                 ?.substringBeforeLast('.')

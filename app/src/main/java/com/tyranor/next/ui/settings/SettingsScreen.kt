@@ -1569,6 +1569,12 @@ private fun LazyListPlaceholder(
                     validate = { EngineSettingsStore.isValidWinlatorEnvVars(it) },
                     onValueChange = { onWinlator(winlator.copy(envVars = it)) },
                 )
+                Text(
+                    stringResource(R.string.engine_settings_winlator_win_component_note),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MiuixTheme.colorScheme.onBackground,
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
+                )
                 SwitchPreference(
                     title = stringResource(R.string.engine_settings_winlator_save_title),
                     summary = stringResource(R.string.engine_settings_winlator_save_summary),

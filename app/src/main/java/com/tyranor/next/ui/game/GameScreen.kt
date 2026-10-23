@@ -743,21 +743,15 @@ internal fun GameActionsSheet(
         }
     }
 
-    /** Winlator 快捷方式启动：只打开 Winlator 内已存在的 .desktop，容器 ID / 名称取单游戏 Winlator 卡片。 */
+    /**
+     * Winlator 快捷方式启动：只打开 Winlator 内已存在的 .desktop。
+     * 容器 ID / 快捷方式名由 [EngineLauncher.openWinlatorShortcut] 在自己的 IO 协程里回退读取，
+     * 这里不再先读一遍设置（`getStr` 会同步等待 DB/prefs 同步，避免阻塞主线程）。
+     */
     fun launchWinlatorShortcut() {
-        val containerId = PerGameSettingsStore.getStr(
-            context,
-            game.uri,
-            PerGameSettingsStore.F_WINLATOR_SHORTCUT_CONTAINER_ID,
-        )?.trim()?.toIntOrNull() ?: 0
-        val shortcutName = PerGameSettingsStore.getStr(
-            context,
-            game.uri,
-            PerGameSettingsStore.F_WINLATOR_SHORTCUT,
-        ).orEmpty()
         scope.launch {
             launchError = EngineLauncher
-                .openWinlatorShortcut(context, game, containerId, shortcutName)
+                .openWinlatorShortcut(context, game)
                 .toErrorState(context)
             if (launchError == null) onDismiss()
         }
