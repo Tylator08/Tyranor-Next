@@ -210,6 +210,9 @@ object EffectiveEngineSettings {
             dxwrapper = override.dxwrapper?.let {
                 EngineSettingsStore.normalizeWinlatorDxWrapper(it)
             } ?: global.dxwrapper,
+            wined3dRenderer = override.wined3dRenderer?.let {
+                EngineSettingsStore.normalizeWinlatorWined3dRenderer(it)
+            } ?: global.wined3dRenderer,
             screenSize = override.screenSize?.let {
                 EngineSettingsStore.normalizeWinlatorScreenSize(it)
             } ?: global.screenSize,
@@ -218,6 +221,16 @@ object EffectiveEngineSettings {
             box64Preset = override.box64Preset?.let {
                 EngineSettingsStore.normalizeWinlatorBox64Preset(it)
             } ?: global.box64Preset,
+            winComponents = EngineSettingsStore.mergeWinlatorWinComponents(
+                global.winComponents,
+                override.winComponents,
+            ),
+            audioDriver = override.audioDriver?.let {
+                EngineSettingsStore.normalizeWinlatorAudioDriver(it)
+            } ?: global.audioDriver,
+            envVars = override.envVars?.let {
+                EngineSettingsStore.normalizeWinlatorEnvVars(it)
+            } ?: global.envVars,
             save = resolveBool(override.save, global.save),
         )
     }
@@ -275,9 +288,13 @@ data class WinlatorOverride(
     val containerName: String? = null,
     val graphicsDriver: String? = null,
     val dxwrapper: String? = null,
+    val wined3dRenderer: String? = null,
     val screenSize: String? = null,
     val lcAll: String? = null,
     val tz: String? = null,
     val box64Preset: String? = null,
+    val winComponents: String? = null,
+    val audioDriver: String? = null,
+    val envVars: String? = null,
     val save: Boolean? = null,
 )

@@ -56,6 +56,7 @@ import androidx.compose.ui.unit.dp
 import androidx.core.content.FileProvider
 import androidx.documentfile.provider.DocumentFile
 import com.tyranor.next.R
+import com.tyranor.next.core.engine.external.WinlatorContract
 import com.tyranor.next.core.game.launch.EngineLauncher
 import com.tyranor.next.core.settings.AppSettingsStore
 import com.tyranor.next.core.settings.GraphicsCapabilities
@@ -1511,6 +1512,13 @@ private fun LazyListPlaceholder(
                     winlatorDxWrapperOptions(),
                     winlator.dxwrapper,
                 ) { onWinlator(winlator.copy(dxwrapper = it)) }
+                if (winlator.dxwrapper == WinlatorContract.DXWRAPPER_WINED3D) {
+                    DropdownRow(
+                        stringResource(R.string.engine_settings_winlator_wined3d_renderer_title),
+                        winlatorWined3dRendererOptions(),
+                        winlator.wined3dRenderer,
+                    ) { onWinlator(winlator.copy(wined3dRenderer = it)) }
+                }
                 DropdownRow(
                     stringResource(R.string.engine_settings_winlator_screen_size_title),
                     winlatorScreenSizeOptions(),
@@ -1531,6 +1539,36 @@ private fun LazyListPlaceholder(
                     winlatorBox64PresetOptions(),
                     winlator.box64Preset,
                 ) { onWinlator(winlator.copy(box64Preset = it)) }
+                val componentOptions = winlatorWinComponentOptions()
+                EngineSettingsStore.WINLATOR_WIN_COMPONENT_KEYS.forEach { key ->
+                    DropdownRow(
+                        winlatorWinComponentTitle(key),
+                        componentOptions,
+                        EngineSettingsStore.winlatorWinComponent(winlator.winComponents, key),
+                    ) { value ->
+                        onWinlator(
+                            winlator.copy(
+                                winComponents = EngineSettingsStore.setWinlatorWinComponent(
+                                    winlator.winComponents,
+                                    key,
+                                    value,
+                                ),
+                            ),
+                        )
+                    }
+                }
+                DropdownRow(
+                    stringResource(R.string.engine_settings_winlator_audio_driver_title),
+                    winlatorAudioDriverOptions(),
+                    winlator.audioDriver,
+                ) { onWinlator(winlator.copy(audioDriver = it)) }
+                WinlatorValueRow(
+                    label = stringResource(R.string.engine_settings_winlator_env_vars_title),
+                    summaryHint = stringResource(R.string.engine_settings_winlator_env_vars_summary),
+                    value = winlator.envVars,
+                    validate = { EngineSettingsStore.isValidWinlatorEnvVars(it) },
+                    onValueChange = { onWinlator(winlator.copy(envVars = it)) },
+                )
                 SwitchPreference(
                     title = stringResource(R.string.engine_settings_winlator_save_title),
                     summary = stringResource(R.string.engine_settings_winlator_save_summary),
