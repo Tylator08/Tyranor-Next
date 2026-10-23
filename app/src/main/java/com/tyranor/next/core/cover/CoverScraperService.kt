@@ -171,11 +171,11 @@ object CoverScraperService {
     fun supportsCoverDrillDown(source: String): Boolean =
         source == AppSettingsStore.COVER_SOURCE_NEXTMOE
 
-    fun bindCoverCandidate(
+    internal fun bindCoverCandidate(
         context: Context,
         game: ScanGame,
         candidate: CoverSearchCandidate,
-        isCancelled: () -> Boolean = { false },
+        cancel: CoverDownloadCancel? = null,
         onProgress: (Float) -> Unit = {},
     ): ScanGame? {
         val prefix = "${candidate.source}_${stableKey(game.uri)}"
@@ -187,16 +187,18 @@ object CoverScraperService {
                 downloadUrl,
                 prefix,
                 source = candidate.source,
-                isCancelled = isCancelled,
+                cancel = cancel,
                 onProgress = onProgress,
-            ) ?: appId?.let { SteamCoverSource.downloadSteamHeader(context, game, it, isCancelled) }
+            ) ?: appId?.let {
+                SteamCoverSource.downloadSteamHeader(context, game, it, cancel, onProgress)
+            }
         } else {
             CoverImageCache.download(
                 context = context,
                 imageUrl = downloadUrl,
                 prefix = prefix,
                 source = candidate.source,
-                isCancelled = isCancelled,
+                cancel = cancel,
                 onProgress = onProgress,
             )
         }
@@ -426,13 +428,14 @@ private object SteamCoverSource {
         }
     }
 
-    fun downloadSteamHeader(
+    internal fun downloadSteamHeader(
         context: Context,
         game: ScanGame,
         appId: Int,
-        isCancelled: () -> Boolean = { false },
+        cancel: CoverDownloadCancel? = null,
+        onProgress: (Float) -> Unit = {},
     ): String? {
-        if (isCancelled()) return null
+        if (cancel?.isCancelled == true) return null
         val details = httpJson("$DETAILS_URL?appids=$appId&l=schinese&cc=CN") ?: return null
         val header = details.optJSONObject(appId.toString())
             ?.optJSONObject("data")
@@ -444,7 +447,8 @@ private object SteamCoverSource {
             header,
             "steam_${stableKey(game.uri)}",
             source = AppSettingsStore.COVER_SOURCE_STEAM,
-            isCancelled = isCancelled,
+            cancel = cancel,
+            onProgress = onProgress,
         )
     }
 }

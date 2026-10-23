@@ -1,8 +1,8 @@
 package com.tyranor.next.core.cover
 
 import android.content.Context
-import com.tyranor.next.R
 import com.tyranor.next.core.game.model.ScanGame
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -12,31 +12,34 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.atomic.AtomicBoolean
 
 /**
  * 封面绑定任务：搜索弹窗关闭后继续下载，并在原游戏封面显示进度圈。
- * 点击进度圈可暂停/继续；暂停会取消当前下载，继续时从头发起。
+ * 点击进度圈可暂停/继续；暂停会断开当前下载，继续时从头发起。
+ *
+ * 线程约定：任务表与 [states] 的读改写都在 [lock] 内完成，进度回调只在「自己仍是当前任务」时落盘，
+ * 避免暂停/替换任务后旧协程把过期进度或状态写回来。
+ * 失败只通过 [bind] 的 `onError` 上报，文案由 UI 层组装（core 不持有本地化文案）。
  */
 object CoverBindingManager {
 
     data class State(val paused: Boolean, val progress: Float = 0f)
 
-    private data class Run(
-        val cancelled: AtomicBoolean,
-        val token: Any = Any(),
-        var job: Job? = null,
-    )
+    private class Run(val cancel: CoverDownloadCancel) {
+        var job: Job? = null
+    }
 
-    private data class Task(
+    private class Task(
         val context: Context,
         val game: ScanGame,
         val candidate: CoverSearchCandidate,
         val onUpdated: (ScanGame) -> Unit,
+        val onError: () -> Unit,
     ) {
         var run: Run? = null
     }
 
+    private val lock = Any()
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val _states = MutableStateFlow<Map<String, State>>(emptyMap())
     val states: StateFlow<Map<String, State>> = _states
@@ -48,35 +51,29 @@ object CoverBindingManager {
         game: ScanGame,
         candidate: CoverSearchCandidate,
         onUpdated: (ScanGame) -> Unit,
+        onError: () -> Unit = {},
     ) {
-        tasks.remove(game.uri)?.run?.let {
-            it.cancelled.set(true)
-            it.job?.cancel()
+        val task = Task(context.applicationContext, game, candidate, onUpdated, onError)
+        val previous = synchronized(lock) { tasks.put(game.uri, task) }
+        previous?.run?.let { run ->
+            run.cancel.cancel()
+            run.job?.cancel()
         }
-        val task = Task(context.applicationContext, game, candidate, onUpdated)
-        tasks[game.uri] = task
         start(task)
     }
 
     fun toggle(uri: String) {
         val task = tasks[uri] ?: return
         val paused = _states.value[uri]?.paused ?: false
-        if (paused) {
-            start(task)
-        } else {
-            task.run?.let {
-                it.cancelled.set(true)
-                it.job?.cancel()
-            }
-            task.run = null
-            _states.value = _states.value + (uri to State(true, _states.value[uri]?.progress ?: 0f))
-        }
+        if (paused) start(task) else pause(task)
     }
 
     private fun start(task: Task) {
-        val run = Run(AtomicBoolean(false))
-        task.run = run
-        _states.value = _states.value + (task.game.uri to State(false, 0.03f))
+        val run = Run(CoverDownloadCancel())
+        synchronized(lock) {
+            task.run = run
+            _states.value = _states.value + (task.game.uri to State(paused = false, progress = 0f))
+        }
         run.job = scope.launch {
             var lastEmit = 0L
             val updated = try {
@@ -84,36 +81,41 @@ object CoverBindingManager {
                     task.context,
                     task.game,
                     task.candidate,
-                    isCancelled = { run.cancelled.get() },
+                    cancel = run.cancel,
                     onProgress = { progress ->
                         // 进度按 100ms 节流落到 StateFlow，避免每个读块都触发一次 UI 重组。
                         val now = System.currentTimeMillis()
                         if (now - lastEmit >= 100L || progress >= 0.95f) {
                             lastEmit = now
-                            val current = _states.value[task.game.uri]
-                            if (current != null && !current.paused) {
-                                _states.value = _states.value + (task.game.uri to current.copy(progress = progress))
+                            synchronized(lock) {
+                                // 暂停或换任务后旧协程仍可能回调，只有自己还是当前 run 才写入。
+                                if (task.run !== run) return@synchronized
+                                _states.value = _states.value +
+                                    (task.game.uri to State(paused = false, progress = progress))
                             }
                         }
                     },
                 )
+            } catch (cancelled: CancellationException) {
+                // 取消不是失败：原样向上抛，交给协程取消语义处理。
+                throw cancelled
             } catch (_: Throwable) {
                 null
             }
-            if (run.cancelled.get()) return@launch
+            if (run.cancel.isCancelled) return@launch
             withContext(Dispatchers.Main.immediate) {
-                if (task.run !== run) return@withContext
-                if (updated != null) {
-                    task.onUpdated(updated)
-                } else {
-                    android.widget.Toast.makeText(
-                        task.context,
-                        task.context.getString(R.string.game_cover_download_failed),
-                        android.widget.Toast.LENGTH_SHORT,
-                    ).show()
+                val current = synchronized(lock) {
+                    if (tasks[task.game.uri] !== task || task.run !== run) {
+                        false
+                    } else {
+                        task.run = null
+                        tasks.remove(task.game.uri, task)
+                        _states.value = _states.value - task.game.uri
+                        true
+                    }
                 }
-                tasks.remove(task.game.uri, task)
-                _states.value = _states.value - task.game.uri
+                if (!current) return@withContext
+                if (updated != null) task.onUpdated(updated) else task.onError()
             }
             // 旧封面删除移出绑定关键路径：UI 已拿到新封面后再清理缓存中的旧图。
             if (updated != null) {
@@ -121,6 +123,19 @@ object CoverBindingManager {
                     CoverImageCache.deleteCachedCover(task.context, task.game.coverUri, updated.coverUri)
                 }
             }
+        }
+    }
+
+    private fun pause(task: Task) {
+        val run = synchronized(lock) {
+            task.run.also { task.run = null }
+        } ?: return
+        // 先断开连接再取消协程：阻塞中的 read 会立刻抛错退出，不必等满 readTimeout。
+        run.cancel.cancel()
+        run.job?.cancel()
+        synchronized(lock) {
+            val progress = _states.value[task.game.uri]?.progress ?: 0f
+            _states.value = _states.value + (task.game.uri to State(paused = true, progress = progress))
         }
     }
 }

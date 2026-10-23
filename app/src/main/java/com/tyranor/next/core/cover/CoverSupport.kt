@@ -13,6 +13,7 @@ import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.StandardCopyOption
 import java.security.MessageDigest
+import java.util.concurrent.atomic.AtomicBoolean
 
 /**
  * 搜索失败：携带错误码而非文案。`detail` 只进异常 message 供日志排查，绝不直接展示；
@@ -109,6 +110,29 @@ internal fun httpJson(
 internal fun String.urlEncode(): String =
     URLEncoder.encode(this, StandardCharsets.UTF_8.name())
 
+/**
+ * 可取消的下载句柄：取消时标记并断开连接，避免协程取消后仍阻塞在 `input.read` 上。
+ * 下载线程每次读取前检查 [isCancelled]；[attach] 在连接建立后挂接，供取消方立即断开。
+ */
+internal class CoverDownloadCancel {
+    private val cancelled = AtomicBoolean(false)
+
+    @Volatile
+    private var connection: HttpURLConnection? = null
+
+    val isCancelled: Boolean get() = cancelled.get()
+
+    fun attach(target: HttpURLConnection) {
+        connection = target
+        if (cancelled.get()) target.disconnect()
+    }
+
+    fun cancel() {
+        cancelled.set(true)
+        connection?.disconnect()
+    }
+}
+
 internal object CoverImageCache {
     private const val MAX_COVER_BYTES = 20L * 1024L * 1024L
 
@@ -120,11 +144,11 @@ internal object CoverImageCache {
         referer: String? = source?.let(::coverRefererForSource),
         cookie: String? = source?.let(::coverCookieForSource),
         persistent: Boolean = true,
-        isCancelled: () -> Boolean = { false },
+        cancel: CoverDownloadCancel? = null,
         onProgress: (Float) -> Unit = {},
     ): String? {
         if (imageUrl.isBlank()) return null
-        if (isCancelled()) return null
+        if (cancel?.isCancelled == true) return null
         val dir = coverCacheDir(context, persistent)
         if (!dir.exists() && !dir.mkdirs()) return null
         val safePrefix = prefix.replace(Regex("[^A-Za-z0-9_.-]"), "_")
@@ -142,6 +166,9 @@ internal object CoverImageCache {
                 referer?.let { setRequestProperty("Referer", it) }
                 cookie?.let { setRequestProperty("Cookie", it) }
             }
+            // 挂接后取消方可以直接 disconnect，立即打断阻塞中的 read。
+            cancel?.attach(conn)
+            if (cancel?.isCancelled == true) return null
             if (conn.responseCode !in 200..299) return null
             if (conn.contentLengthLong > MAX_COVER_BYTES) return null
             val length = conn.contentLengthLong
@@ -154,7 +181,7 @@ internal object CoverImageCache {
                 FileOutputStream(tempFile).use { output ->
                     val buffer = ByteArray(65536)
                     while (true) {
-                        if (isCancelled()) return null
+                        if (cancel?.isCancelled == true) return null
                         val read = input.read(buffer)
                         if (read <= 0) break
                         total += read
