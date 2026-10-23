@@ -134,4 +134,17 @@ object CoverBindingManager {
             }
         }
     }
+
+    /**
+     * 外部途径改过封面（自定义图片、批量抓取等）后清掉该游戏保留的失败任务与状态，
+     * 避免封面上的「重新下载」用旧候选覆盖刚设置的新封面；其他游戏不受影响。
+     */
+    fun invalidate(uri: String) {
+        val task = synchronized(lock) { tasks.remove(uri) } ?: return
+        task.run?.let { run ->
+            run.cancel.cancel()
+            run.job?.cancel()
+        }
+        synchronized(lock) { _states.value = _states.value - uri }
+    }
 }

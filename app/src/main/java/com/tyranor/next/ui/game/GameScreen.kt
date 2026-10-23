@@ -221,6 +221,11 @@ fun GameScreen(
     }
 
     fun replaceGame(updated: ScanGame) {
+        // 封面被其它途径改过时清掉保留的失败任务，避免「重新下载」用旧候选盖掉新封面。
+        val previous = games.firstOrNull { it.uri == updated.uri }
+        if (previous != null && previous.coverUri != updated.coverUri) {
+            CoverBindingManager.invalidate(updated.uri)
+        }
         onGameUpdated(updated)
     }
 
@@ -840,6 +845,7 @@ internal fun GameActionsSheet(
                 }
             }
             if (updated != null) {
+                CoverBindingManager.invalidate(game.uri)
                 onGameUpdated(updated)
                 launchError = null
                 onDismiss()
