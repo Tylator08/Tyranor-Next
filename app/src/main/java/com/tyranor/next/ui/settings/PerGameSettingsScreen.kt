@@ -1331,7 +1331,7 @@ fun PerGameSettingsScreen(game: ScanGame) {
                 }
 
                 if (game.engine in WINLATOR_LAUNCH_ENGINES) item {
-                    SectionCard("Winlator") {
+                    SectionCard(stringResource(R.string.engine_settings_winlator_group_graphics)) {
                         OverrideText(
                             label = stringResource(R.string.engine_settings_winlator_container_id_title),
                             globalValue = if (globalWinlator.containerId > 0) globalWinlator.containerId.toString() else "",
@@ -1366,12 +1366,15 @@ fun PerGameSettingsScreen(game: ScanGame) {
                         // 未覆盖（null）时运行时用全局值；显式空串仍表示「跟随容器」，不回退到全局。
                         val effectiveDxWrapper = winlatorDxwrapper ?: globalWinlator.dxwrapper
                         if (effectiveDxWrapper == WinlatorContract.DXWRAPPER_WINED3D) {
-                            OverrideChoice(
-                                stringResource(R.string.engine_settings_winlator_wined3d_renderer_title),
-                                winlatorWined3dRendererMap,
-                                globalWinlator.wined3dRenderer,
-                                winlatorWined3dRenderer,
-                            ) { winlatorWined3dRenderer = it }
+                            // 渲染器从属于「图形加速」，缩进一级表示层级关系。
+                            Box(Modifier.padding(start = 12.dp)) {
+                                OverrideChoice(
+                                    stringResource(R.string.engine_settings_winlator_wined3d_renderer_title),
+                                    winlatorWined3dRendererMap,
+                                    globalWinlator.wined3dRenderer,
+                                    winlatorWined3dRenderer,
+                                ) { winlatorWined3dRenderer = it }
+                            }
                         }
                         OverrideChoice(
                             stringResource(R.string.engine_settings_winlator_screen_size_title),
@@ -1391,12 +1394,45 @@ fun PerGameSettingsScreen(game: ScanGame) {
                             globalWinlator.tz,
                             winlatorTz,
                         ) { winlatorTz = it }
+                    }
+                }
+
+                if (game.engine in WINLATOR_LAUNCH_ENGINES) item {
+                    SectionCard(stringResource(R.string.engine_settings_winlator_group_box64)) {
                         OverrideChoice(
                             stringResource(R.string.engine_settings_winlator_box64_preset_title),
                             winlatorBox64PresetMap,
                             globalWinlator.box64Preset,
                             winlatorBox64Preset,
                         ) { winlatorBox64Preset = it }
+                        // 当前生效值：显式覆盖 → 跟随全局值 → 全局也交给容器。
+                        val box64Current = when {
+                            winlatorBox64Preset != null -> stringResource(
+                                R.string.engine_settings_winlator_box64_current,
+                                winlatorBox64PresetMap[winlatorBox64Preset] ?: winlatorBox64Preset.orEmpty(),
+                            )
+
+                            globalWinlator.box64Preset.isNotBlank() -> stringResource(
+                                R.string.engine_settings_winlator_box64_follow_global,
+                                winlatorBox64PresetMap[globalWinlator.box64Preset] ?: globalWinlator.box64Preset,
+                            )
+
+                            else -> stringResource(
+                                R.string.engine_settings_winlator_box64_follow_global,
+                                stringResource(R.string.engine_settings_winlator_box64_follow_container),
+                            )
+                        }
+                        Text(
+                            box64Current,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 6.dp),
+                        )
+                    }
+                }
+
+                if (game.engine in WINLATOR_LAUNCH_ENGINES) item {
+                    SectionCard(stringResource(R.string.engine_settings_winlator_group_windows)) {
                         EngineSettingsStore.WINLATOR_WIN_COMPONENT_KEYS.forEach { key ->
                             OverrideChoice(
                                 label = winlatorWinComponentTitle(key),
@@ -1417,6 +1453,17 @@ fun PerGameSettingsScreen(game: ScanGame) {
                                 )
                             }
                         }
+                        Text(
+                            stringResource(R.string.engine_settings_winlator_win_component_note),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 10.dp),
+                        )
+                    }
+                }
+
+                if (game.engine in WINLATOR_LAUNCH_ENGINES) item {
+                    SectionCard(stringResource(R.string.engine_settings_winlator_group_advanced)) {
                         OverrideChoice(
                             stringResource(R.string.engine_settings_winlator_audio_driver_title),
                             winlatorAudioDriverMap,
@@ -1430,6 +1477,27 @@ fun PerGameSettingsScreen(game: ScanGame) {
                             hint = stringResource(R.string.engine_settings_winlator_env_vars_summary),
                             validate = { EngineSettingsStore.isValidWinlatorEnvVars(it) },
                         ) { winlatorEnvVars = it }
+                    }
+                }
+
+                if (game.engine in WINLATOR_LAUNCH_ENGINES) item {
+                    SectionCard(stringResource(R.string.engine_settings_winlator_group_save)) {
+                        OverrideSwitch(
+                            stringResource(R.string.engine_settings_winlator_save_title),
+                            globalWinlator.save,
+                            winlatorSave,
+                        ) { winlatorSave = it }
+                        Text(
+                            stringResource(R.string.engine_settings_winlator_per_game_note),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 10.dp),
+                        )
+                    }
+                }
+
+                if (game.engine in WINLATOR_LAUNCH_ENGINES) item {
+                    SectionCard(stringResource(R.string.engine_settings_winlator_group_shortcut)) {
                         // 快捷方式启动：仅打开 Winlator 内已存在的 .desktop，不参与上面的参数下发。
                         OverrideText(
                             label = stringResource(R.string.engine_settings_winlator_shortcut_container_id_title),
@@ -1452,17 +1520,6 @@ fun PerGameSettingsScreen(game: ScanGame) {
                         ) { winlatorShortcut = it }
                         Text(
                             stringResource(R.string.engine_settings_winlator_shortcut_note),
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 10.dp),
-                        )
-                        OverrideSwitch(
-                            stringResource(R.string.engine_settings_winlator_save_title),
-                            globalWinlator.save,
-                            winlatorSave,
-                        ) { winlatorSave = it }
-                        Text(
-                            stringResource(R.string.engine_settings_winlator_per_game_note),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 10.dp),

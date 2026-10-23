@@ -418,6 +418,19 @@
     <string name="engine_settings_winlator_container_id_summary">0 或留空 = 自动（最近使用 / 唯一 / 第一个容器）</string>
     <string name="engine_settings_winlator_container_name_title">容器名</string>
     <string name="engine_settings_winlator_container_name_summary">留空 = 自动；容器 ID 优先于容器名</string>
+    <string name="engine_settings_winlator_group_graphics">图形与运行环境</string>
+    <string name="engine_settings_winlator_group_box64">BOX64</string>
+    <string name="engine_settings_winlator_box64_stability">稳定模式</string>
+    <string name="engine_settings_winlator_box64_conservative">兼容模式</string>
+    <string name="engine_settings_winlator_box64_intermediate">均衡模式</string>
+    <string name="engine_settings_winlator_box64_performance">性能模式</string>
+    <string name="engine_settings_winlator_box64_current">当前：%1$s</string>
+    <string name="engine_settings_winlator_box64_follow_global">跟随全局：%1$s</string>
+    <string name="engine_settings_winlator_box64_follow_container">跟随容器</string>
+    <string name="engine_settings_winlator_group_windows">Windows 组件</string>
+    <string name="engine_settings_winlator_group_advanced">高级启动设置</string>
+    <string name="engine_settings_winlator_group_save">写入容器配置</string>
+    <string name="engine_settings_winlator_group_shortcut">快捷方式启动</string>
     <string name="engine_settings_winlator_graphics_driver_title">图形驱动</string>
     <string name="engine_settings_winlator_dxwrapper_title">图形加速</string>
     <string name="engine_settings_winlator_wined3d_renderer_title">WineD3D 渲染器</string>
