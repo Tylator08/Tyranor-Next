@@ -171,23 +171,37 @@ object CoverScraperService {
     fun supportsCoverDrillDown(source: String): Boolean =
         source == AppSettingsStore.COVER_SOURCE_NEXTMOE
 
-    fun bindCoverCandidate(context: Context, game: ScanGame, candidate: CoverSearchCandidate): ScanGame? {
+    fun bindCoverCandidate(
+        context: Context,
+        game: ScanGame,
+        candidate: CoverSearchCandidate,
+        isCancelled: () -> Boolean = { false },
+        onProgress: (Float) -> Unit = {},
+    ): ScanGame? {
         val prefix = "${candidate.source}_${stableKey(game.uri)}"
         val downloadUrl = candidate.downloadUrl?.takeIf { it.isNotBlank() } ?: candidate.coverUrl
         val cover = if (candidate.source == AppSettingsStore.COVER_SOURCE_STEAM) {
             val appId = candidate.id.toIntOrNull()
-            CoverImageCache.download(context, downloadUrl, prefix, source = candidate.source)
-                ?: appId?.let { SteamCoverSource.downloadSteamHeader(context, game, it) }
+            CoverImageCache.download(
+                context,
+                downloadUrl,
+                prefix,
+                source = candidate.source,
+                isCancelled = isCancelled,
+                onProgress = onProgress,
+            ) ?: appId?.let { SteamCoverSource.downloadSteamHeader(context, game, it, isCancelled) }
         } else {
             CoverImageCache.download(
                 context = context,
                 imageUrl = downloadUrl,
                 prefix = prefix,
                 source = candidate.source,
+                isCancelled = isCancelled,
+                onProgress = onProgress,
             )
         }
+        // 旧封面删除不在这里做：由调用方在 UI 更新之后清理，避免拖慢绑定关键路径。
         return cover?.let {
-            CoverImageCache.deleteCachedCover(context, game.coverUri, exceptUri = it)
             game.copy(
                 coverUri = it,
                 coverSource = candidate.source,
@@ -412,14 +426,26 @@ private object SteamCoverSource {
         }
     }
 
-    fun downloadSteamHeader(context: Context, game: ScanGame, appId: Int): String? {
+    fun downloadSteamHeader(
+        context: Context,
+        game: ScanGame,
+        appId: Int,
+        isCancelled: () -> Boolean = { false },
+    ): String? {
+        if (isCancelled()) return null
         val details = httpJson("$DETAILS_URL?appids=$appId&l=schinese&cc=CN") ?: return null
         val header = details.optJSONObject(appId.toString())
             ?.optJSONObject("data")
             ?.optString("header_image", "")
             .orEmpty()
         if (header.isBlank()) return null
-        return CoverImageCache.download(context, header, "steam_${stableKey(game.uri)}", source = AppSettingsStore.COVER_SOURCE_STEAM)
+        return CoverImageCache.download(
+            context,
+            header,
+            "steam_${stableKey(game.uri)}",
+            source = AppSettingsStore.COVER_SOURCE_STEAM,
+            isCancelled = isCancelled,
+        )
     }
 }
 

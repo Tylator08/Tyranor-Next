@@ -95,6 +95,7 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import top.yukonga.miuix.kmp.basic.RadioButton
 import com.tyranor.next.R
+import com.tyranor.next.core.cover.CoverBindingManager
 import com.tyranor.next.core.cover.CoverErrorCode
 import com.tyranor.next.core.cover.CoverImageCache
 import com.tyranor.next.core.cover.CoverScrapeTaskManager
@@ -657,8 +658,6 @@ internal fun GameActionsSheet(
     var launchError by remember(game.uri) { mutableStateOf<LaunchErrorState?>(null) }
     var showCoverSourcePicker by rememberSaveable(game.uri) { mutableStateOf(false) }
     var coverSearchSource by rememberSaveable(game.uri) { mutableStateOf<String?>(null) }
-    var coverBinding by remember { mutableStateOf(false) }
-    var coverBindError by rememberSaveable(game.uri) { mutableStateOf<String?>(null) }
     var showDeleteConfirm by rememberSaveable(game.uri) { mutableStateOf(false) }
     var showLaunchFilePicker by rememberSaveable(game.uri) { mutableStateOf(false) }
     var showRenameDialog by rememberSaveable(game.uri) { mutableStateOf(false) }
@@ -673,7 +672,6 @@ internal fun GameActionsSheet(
     val settingCoverMessage = stringResource(R.string.game_setting_cover)
     val coverSetFailedMessage = stringResource(R.string.game_cover_set_failed)
     val quickLaunchFullMessage = stringResource(R.string.game_quick_launch_full)
-    val coverDownloadFailedMessage = stringResource(R.string.game_cover_download_failed)
     val shortcutRequestedMessage = stringResource(R.string.game_desktop_shortcut_requested)
     val shortcutUpdatedMessage = stringResource(R.string.game_desktop_shortcut_updated)
     val shortcutUnsupportedMessage = stringResource(R.string.game_desktop_shortcut_unsupported)
@@ -1155,7 +1153,6 @@ internal fun GameActionsSheet(
             onSelect = { source ->
                 if (!isBatchScrapingActive()) {
                     showCoverSourcePicker = false
-                    coverBindError = null
                     coverSearchSource = source
                 }
             },
@@ -1166,31 +1163,14 @@ internal fun GameActionsSheet(
         CoverSearchDialog(
             game = game,
             source = source,
-            binding = coverBinding,
-            bindError = coverBindError,
             onDismiss = { coverSearchSource = null },
             onBind = { candidate ->
-                if (!coverBinding && !isBatchScrapingActive()) {
-                    coverBinding = true
-                    coverBindError = null
-                    scope.launch {
-                        val updated = withContext(Dispatchers.IO) {
-                            try {
-                                CoverScraperService.bindCoverCandidate(context, game, candidate)
-                            } catch (cancelled: CancellationException) {
-                                throw cancelled
-                            } catch (_: Throwable) {
-                                null
-                            }
-                        }
-                        coverBinding = false
-                        if (updated != null) {
-                            onGameUpdated(updated)
-                            coverSearchSource = null
-                            onDismiss()
-                        } else {
-                            coverBindError = coverDownloadFailedMessage
-                        }
+                if (!isBatchScrapingActive()) {
+                    // 选中后立刻关闭弹窗与抽屉，绑定进度显示在原游戏封面上，可点击暂停/继续。
+                    coverSearchSource = null
+                    onDismiss()
+                    CoverBindingManager.bind(context, game, candidate) { updated ->
+                        onGameUpdated(updated)
                     }
                 }
             },
@@ -1333,8 +1313,6 @@ private fun CoverSourcePickerDialog(
 private fun CoverSearchDialog(
     game: ScanGame,
     source: String,
-    binding: Boolean,
-    bindError: String?,
     onDismiss: () -> Unit,
     onBind: (CoverSearchCandidate) -> Unit,
 ) {
@@ -1371,7 +1349,7 @@ private fun CoverSearchDialog(
 
     fun search() {
         val query = keyword.trim()
-        if (query.isEmpty() || searching || binding) return
+        if (query.isEmpty() || searching) return
         scope.launch {
             searching = true
             errorCode = null
@@ -1409,7 +1387,7 @@ private fun CoverSearchDialog(
 
     // 二级：拉取所选作品可获取的封面（只有支持「一作品多封面」的来源会走到这里）
     fun openWork(work: CoverSearchCandidate) {
-        if (loadingCovers || binding) return
+        if (loadingCovers) return
         // 上一个二级请求让位：其 finally 不再回写 loading 态（见下方 isActive 守卫）
         coversJob?.cancel()
         coversJob = null
@@ -1439,12 +1417,10 @@ private fun CoverSearchDialog(
     }
 
     val onCandidateClick: (CoverSearchCandidate) -> Unit = { candidate ->
-        if (!binding) {
-            if (drillDownWork == null && CoverScraperService.supportsCoverDrillDown(candidate.source)) {
-                openWork(candidate)
-            } else {
-                onBind(candidate)
-            }
+        if (drillDownWork == null && CoverScraperService.supportsCoverDrillDown(candidate.source)) {
+            openWork(candidate)
+        } else {
+            onBind(candidate)
         }
     }
 
@@ -1478,7 +1454,7 @@ private fun CoverSearchDialog(
                 } else {
                     Modifier.height(CoverSearchDialogMaxHeight)
                 }
-                val canSearch = keyword.trim().isNotEmpty() && !searching && !binding
+                val canSearch = keyword.trim().isNotEmpty() && !searching
                 val drillDown = drillDownWork
                 val visibleCandidates = if (drillDown != null) workCovers else candidates
                 val infoMessage: String? = when {
@@ -1547,22 +1523,6 @@ private fun CoverSearchDialog(
                                     stringResource(R.string.cover_nextmoe_attribution),
                                     style = MaterialTheme.typography.bodyMedium,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    modifier = Modifier.padding(top = 8.dp),
-                                )
-                            }
-                            if (binding) {
-                                Text(
-                                    stringResource(R.string.game_cover_binding),
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    modifier = Modifier.padding(top = 8.dp),
-                                )
-                            }
-                            bindError?.let {
-                                Text(
-                                    it,
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = MaterialTheme.colorScheme.error,
                                     modifier = Modifier.padding(top = 8.dp),
                                 )
                             }
@@ -1954,6 +1914,9 @@ internal fun GameCard(
     /** 左上角引擎类型角标（应用设置「卡片引擎角标」，默认关）。 */
     showEngineBadge: Boolean = false,
 ) {
+    val context = LocalContext.current
+    val bindingStates by CoverBindingManager.states.collectAsState()
+    val bindingState = bindingStates[game.uri]
     Column(modifier) {
         val engineName = when (game.engine) {
             EngineType.UNKNOWN -> stringResource(R.string.engine_name_unknown)
@@ -2023,6 +1986,19 @@ internal fun GameCard(
                         .background(CoverBadgeBackground)
                         .padding(horizontal = 4.dp, vertical = 1.dp),
                 )
+            }
+            bindingState?.let { state ->
+                Box(
+                    modifier = Modifier
+                        .matchParentSize()
+                        .background(Color.Black.copy(alpha = 0.18f)),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    CoverBindingProgress(
+                        state = state,
+                        onClick = { CoverBindingManager.toggle(game.uri) },
+                    )
+                }
             }
         }
         Text(

@@ -238,7 +238,8 @@
     <string name="game_cover_no_match">一致する結果が見つかりません</string>
     <string name="game_cover_search_title">%1$s のカバー画像を検索</string>
     <string name="game_cover_searching">カバー画像を検索中…</string>
-    <string name="game_cover_binding">カバー画像を適用中…</string>
+    <string name="game_cover_binding_in_progress">バインド中</string>
+    <string name="game_cover_binding_paused">一時停止</string>
     <string name="game_searching">検索中…</string>
     <string name="game_search">検索</string>
     <string name="game_no_preview">プレビューなし</string>

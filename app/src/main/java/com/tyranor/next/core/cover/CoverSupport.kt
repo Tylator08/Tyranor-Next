@@ -120,8 +120,11 @@ internal object CoverImageCache {
         referer: String? = source?.let(::coverRefererForSource),
         cookie: String? = source?.let(::coverCookieForSource),
         persistent: Boolean = true,
+        isCancelled: () -> Boolean = { false },
+        onProgress: (Float) -> Unit = {},
     ): String? {
         if (imageUrl.isBlank()) return null
+        if (isCancelled()) return null
         val dir = coverCacheDir(context, persistent)
         if (!dir.exists() && !dir.mkdirs()) return null
         val safePrefix = prefix.replace(Regex("[^A-Za-z0-9_.-]"), "_")
@@ -141,22 +144,35 @@ internal object CoverImageCache {
             }
             if (conn.responseCode !in 200..299) return null
             if (conn.contentLengthLong > MAX_COVER_BYTES) return null
+            val length = conn.contentLengthLong
+            onProgress(0.05f)
             val tempFile = File.createTempFile(target.nameWithoutExtension, ".tmp", dir)
             tmp = tempFile
             var total = 0L
+            var lastPercent = -1
             conn.inputStream.use { input ->
                 FileOutputStream(tempFile).use { output ->
-                    val buffer = ByteArray(8192)
+                    val buffer = ByteArray(65536)
                     while (true) {
+                        if (isCancelled()) return null
                         val read = input.read(buffer)
                         if (read <= 0) break
                         total += read
                         if (total > MAX_COVER_BYTES) error("cover too large")
                         output.write(buffer, 0, read)
+                        if (length > 0L) {
+                            // 只在整数百分比变化时回调，下载线程不必每个读块都通知 UI。
+                            val percent = ((total * 100L) / length).toInt().coerceIn(0, 100)
+                            if (percent != lastPercent) {
+                                lastPercent = percent
+                                onProgress(0.05f + percent / 100f * 0.85f)
+                            }
+                        }
                     }
                 }
             }
             if (total <= 0L) error("empty cover")
+            onProgress(0.95f)
             moveTempCover(tempFile, target)
             Uri.fromFile(target).toString()
         } catch (_: Exception) {

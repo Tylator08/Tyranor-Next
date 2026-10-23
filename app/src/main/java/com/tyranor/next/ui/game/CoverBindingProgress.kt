@@ -1,0 +1,107 @@
+package com.tyranor.next.ui.game
+
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.tyranor.next.R
+import com.tyranor.next.core.cover.CoverBindingManager
+
+/**
+ * 封面绑定进度：确定环 + 状态文字，不使用无限旋转。
+ * 进度只用于画环，不显示百分数；暂停时冻结并显示醒目的暂停标签。
+ */
+@Composable
+fun CoverBindingProgress(
+    state: CoverBindingManager.State,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val progress by animateFloatAsState(
+        targetValue = state.progress.coerceIn(0f, 1f),
+        animationSpec = tween(durationMillis = 120),
+        label = "coverBindingProgress",
+    )
+    Box(
+        modifier = modifier
+            .size(42.dp)
+            .clip(CircleShape)
+            .background(Color.Black.copy(alpha = if (state.paused) 0.58f else 0.42f))
+            .clickable(onClick = onClick),
+        contentAlignment = Alignment.Center,
+    ) {
+        Canvas(Modifier.matchParentSize()) {
+            val stroke = 3.dp.toPx()
+            val inset = stroke / 2f
+            val arcSize = Size(size.width - stroke, size.height - stroke)
+            drawArc(
+                color = Color.White.copy(alpha = 0.24f),
+                startAngle = -90f,
+                sweepAngle = 360f,
+                useCenter = false,
+                topLeft = Offset(inset, inset),
+                size = arcSize,
+                style = Stroke(width = stroke, cap = StrokeCap.Round),
+            )
+            if (progress > 0f) {
+                drawArc(
+                    color = Color.White,
+                    startAngle = -90f,
+                    sweepAngle = 360f * progress,
+                    useCenter = false,
+                    topLeft = Offset(inset, inset),
+                    size = arcSize,
+                    style = Stroke(width = stroke, cap = StrokeCap.Round),
+                )
+            }
+        }
+        if (state.paused) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Text(
+                    "Ⅱ",
+                    color = Color.White,
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Bold,
+                    lineHeight = 15.sp,
+                )
+                Text(
+                    stringResource(R.string.game_cover_binding_paused),
+                    color = Color.White,
+                    fontSize = 7.sp,
+                    textAlign = TextAlign.Center,
+                    lineHeight = 8.sp,
+                )
+            }
+        } else {
+            Text(
+                stringResource(R.string.game_cover_binding_in_progress),
+                color = Color.White,
+                fontSize = 9.sp,
+                fontWeight = FontWeight.Medium,
+                textAlign = TextAlign.Center,
+                lineHeight = 10.sp,
+            )
+        }
+    }
+}

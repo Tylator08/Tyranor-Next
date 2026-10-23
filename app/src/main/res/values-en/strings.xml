@@ -238,7 +238,8 @@
     <string name="game_cover_no_match">No matching results found</string>
     <string name="game_cover_search_title">Search %1$s covers</string>
     <string name="game_cover_searching">Searching covers…</string>
-    <string name="game_cover_binding">Applying cover…</string>
+    <string name="game_cover_binding_in_progress">Binding</string>
+    <string name="game_cover_binding_paused">Paused</string>
     <string name="game_searching">Searching…</string>
     <string name="game_search">Search</string>
     <string name="game_no_preview">No preview</string>
