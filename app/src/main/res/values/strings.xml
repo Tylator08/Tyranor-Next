@@ -239,7 +239,7 @@
     <string name="game_cover_search_title">搜索 %1$s 封面</string>
     <string name="game_cover_searching">正在搜索封面…</string>
     <string name="game_cover_binding_in_progress">绑定中</string>
-    <string name="game_cover_binding_paused">已暂停</string>
+    <string name="game_cover_binding_retry">重新下载</string>
     <string name="game_searching">搜索中…</string>
     <string name="game_search">搜索</string>
     <string name="game_no_preview">无预览</string>

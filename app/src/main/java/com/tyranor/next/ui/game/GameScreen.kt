@@ -671,8 +671,6 @@ internal fun GameActionsSheet(
     val batchScrapeRunningMessage = stringResource(R.string.game_batch_scraping_running)
     val settingCoverMessage = stringResource(R.string.game_setting_cover)
     val coverSetFailedMessage = stringResource(R.string.game_cover_set_failed)
-    // 绑定失败提示由 UI 组装：core 只上报失败，不持有本地化文案。
-    val coverDownloadFailedMessage = stringResource(R.string.game_cover_download_failed)
     val quickLaunchFullMessage = stringResource(R.string.game_quick_launch_full)
     val shortcutRequestedMessage = stringResource(R.string.game_desktop_shortcut_requested)
     val shortcutUpdatedMessage = stringResource(R.string.game_desktop_shortcut_updated)
@@ -1168,7 +1166,7 @@ internal fun GameActionsSheet(
             onDismiss = { coverSearchSource = null },
             onBind = { candidate ->
                 if (!isBatchScrapingActive()) {
-                    // 选中后立刻关闭弹窗与抽屉，绑定进度显示在原游戏封面上，可点击暂停/继续。
+                    // 选中后立刻关闭弹窗与抽屉，绑定进度显示在原游戏封面上；失败时圆上会出现「重新下载」。
                     coverSearchSource = null
                     onDismiss()
                     CoverBindingManager.bind(
@@ -1176,13 +1174,6 @@ internal fun GameActionsSheet(
                         game = game,
                         candidate = candidate,
                         onUpdated = { updated -> onGameUpdated(updated) },
-                        onError = {
-                            android.widget.Toast.makeText(
-                                context,
-                                coverDownloadFailedMessage,
-                                android.widget.Toast.LENGTH_SHORT,
-                            ).show()
-                        },
                     )
                 }
             },
@@ -2008,7 +1999,7 @@ internal fun GameCard(
                 ) {
                     CoverBindingProgress(
                         state = state,
-                        onClick = { CoverBindingManager.toggle(game.uri) },
+                        onRetry = { CoverBindingManager.retry(game.uri) },
                     )
                 }
             }

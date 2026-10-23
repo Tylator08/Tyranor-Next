@@ -184,7 +184,7 @@ private fun CoverFlowCard(
             ) {
                 CoverBindingProgress(
                     state = state,
-                    onClick = { CoverBindingManager.toggle(game.uri) },
+                    onRetry = { CoverBindingManager.retry(game.uri) },
                 )
             }
         }

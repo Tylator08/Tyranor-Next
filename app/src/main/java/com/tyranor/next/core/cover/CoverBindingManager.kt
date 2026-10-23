@@ -15,15 +15,15 @@ import java.util.concurrent.ConcurrentHashMap
 
 /**
  * 封面绑定任务：搜索弹窗关闭后继续下载，并在原游戏封面显示进度圈。
- * 点击进度圈可暂停/继续；暂停会断开当前下载，继续时从头发起。
  *
+ * 这里没有「暂停」：中途只能等它完成，失败后由封面上的「重新下载」重新发起一次绑定。
  * 线程约定：任务表与 [states] 的读改写都在 [lock] 内完成，进度回调只在「自己仍是当前任务」时落盘，
- * 避免暂停/替换任务后旧协程把过期进度或状态写回来。
- * 失败只通过 [bind] 的 `onError` 上报，文案由 UI 层组装（core 不持有本地化文案）。
+ * 避免替换任务后旧协程把过期进度或失败态写回来。
  */
 object CoverBindingManager {
 
-    data class State(val paused: Boolean, val progress: Float = 0f)
+    /** [failed] 为 true 表示这次绑定已结束但没拿到封面，UI 据此显示「重新下载」。 */
+    data class State(val progress: Float = 0f, val failed: Boolean = false)
 
     private class Run(val cancel: CoverDownloadCancel) {
         var job: Job? = null
@@ -34,7 +34,6 @@ object CoverBindingManager {
         val game: ScanGame,
         val candidate: CoverSearchCandidate,
         val onUpdated: (ScanGame) -> Unit,
-        val onError: () -> Unit,
     ) {
         var run: Run? = null
     }
@@ -51,9 +50,8 @@ object CoverBindingManager {
         game: ScanGame,
         candidate: CoverSearchCandidate,
         onUpdated: (ScanGame) -> Unit,
-        onError: () -> Unit = {},
     ) {
-        val task = Task(context.applicationContext, game, candidate, onUpdated, onError)
+        val task = Task(context.applicationContext, game, candidate, onUpdated)
         val previous = synchronized(lock) { tasks.put(game.uri, task) }
         previous?.run?.let { run ->
             run.cancel.cancel()
@@ -62,17 +60,18 @@ object CoverBindingManager {
         start(task)
     }
 
-    fun toggle(uri: String) {
+    /** 失败后重试：沿用上次选中的候选重新下载；进行中的任务忽略。 */
+    fun retry(uri: String) {
         val task = tasks[uri] ?: return
-        val paused = _states.value[uri]?.paused ?: false
-        if (paused) start(task) else pause(task)
+        if (_states.value[uri]?.failed != true) return
+        start(task)
     }
 
     private fun start(task: Task) {
         val run = Run(CoverDownloadCancel())
         synchronized(lock) {
             task.run = run
-            _states.value = _states.value + (task.game.uri to State(paused = false, progress = 0f))
+            _states.value = _states.value + (task.game.uri to State(progress = 0f, failed = false))
         }
         run.job = scope.launch {
             var lastEmit = 0L
@@ -88,10 +87,10 @@ object CoverBindingManager {
                         if (now - lastEmit >= 100L || progress >= 0.95f) {
                             lastEmit = now
                             synchronized(lock) {
-                                // 暂停或换任务后旧协程仍可能回调，只有自己还是当前 run 才写入。
+                                // 换任务后旧协程仍可能回调，只有自己还是当前 run 才写入。
                                 if (task.run !== run) return@synchronized
                                 _states.value = _states.value +
-                                    (task.game.uri to State(paused = false, progress = progress))
+                                    (task.game.uri to State(progress = progress, failed = false))
                             }
                         }
                     },
@@ -104,18 +103,28 @@ object CoverBindingManager {
             }
             if (run.cancel.isCancelled) return@launch
             withContext(Dispatchers.Main.immediate) {
-                val current = synchronized(lock) {
+                val owned = synchronized(lock) {
                     if (tasks[task.game.uri] !== task || task.run !== run) {
                         false
                     } else {
                         task.run = null
-                        tasks.remove(task.game.uri, task)
-                        _states.value = _states.value - task.game.uri
                         true
                     }
                 }
-                if (!current) return@withContext
-                if (updated != null) task.onUpdated(updated) else task.onError()
+                if (!owned) return@withContext
+                if (updated != null) {
+                    synchronized(lock) {
+                        tasks.remove(task.game.uri, task)
+                        _states.value = _states.value - task.game.uri
+                    }
+                    task.onUpdated(updated)
+                } else {
+                    // 失败保留任务与候选，封面上的「重新下载」用它重试。
+                    synchronized(lock) {
+                        val progress = _states.value[task.game.uri]?.progress ?: 0f
+                        _states.value = _states.value + (task.game.uri to State(progress, failed = true))
+                    }
+                }
             }
             // 旧封面删除移出绑定关键路径：UI 已拿到新封面后再清理缓存中的旧图。
             if (updated != null) {
@@ -123,19 +132,6 @@ object CoverBindingManager {
                     CoverImageCache.deleteCachedCover(task.context, task.game.coverUri, updated.coverUri)
                 }
             }
-        }
-    }
-
-    private fun pause(task: Task) {
-        val run = synchronized(lock) {
-            task.run.also { task.run = null }
-        } ?: return
-        // 先断开连接再取消协程：阻塞中的 read 会立刻抛错退出，不必等满 readTimeout。
-        run.cancel.cancel()
-        run.job?.cancel()
-        synchronized(lock) {
-            val progress = _states.value[task.game.uri]?.progress ?: 0f
-            _states.value = _states.value + (task.game.uri to State(paused = true, progress = progress))
         }
     }
 }

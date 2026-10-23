@@ -6,7 +6,6 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Text
@@ -29,13 +28,13 @@ import com.tyranor.next.R
 import com.tyranor.next.core.cover.CoverBindingManager
 
 /**
- * 封面绑定进度：确定环 + 状态文字，不使用无限旋转。
- * 进度只用于画环，不显示百分数；暂停时冻结并显示醒目的暂停标签。
+ * 封面绑定进度：确定环 + 状态文字，不使用无限旋转，也不提供暂停。
+ * 进度只用于画环，不显示百分数；失败后整个圆变成「重新下载」按钮。
  */
 @Composable
 fun CoverBindingProgress(
     state: CoverBindingManager.State,
-    onClick: () -> Unit,
+    onRetry: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val progress by animateFloatAsState(
@@ -47,8 +46,8 @@ fun CoverBindingProgress(
         modifier = modifier
             .size(42.dp)
             .clip(CircleShape)
-            .background(Color.Black.copy(alpha = if (state.paused) 0.58f else 0.42f))
-            .clickable(onClick = onClick),
+            .background(Color.Black.copy(alpha = if (state.failed) 0.58f else 0.42f))
+            .then(if (state.failed) Modifier.clickable(onClick = onRetry) else Modifier),
         contentAlignment = Alignment.Center,
     ) {
         Canvas(Modifier.matchParentSize()) {
@@ -76,32 +75,15 @@ fun CoverBindingProgress(
                 )
             }
         }
-        if (state.paused) {
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text(
-                    "Ⅱ",
-                    color = Color.White,
-                    fontSize = 15.sp,
-                    fontWeight = FontWeight.Bold,
-                    lineHeight = 15.sp,
-                )
-                Text(
-                    stringResource(R.string.game_cover_binding_paused),
-                    color = Color.White,
-                    fontSize = 7.sp,
-                    textAlign = TextAlign.Center,
-                    lineHeight = 8.sp,
-                )
-            }
-        } else {
-            Text(
-                stringResource(R.string.game_cover_binding_in_progress),
-                color = Color.White,
-                fontSize = 9.sp,
-                fontWeight = FontWeight.Medium,
-                textAlign = TextAlign.Center,
-                lineHeight = 10.sp,
-            )
-        }
+        Text(
+            text = stringResource(
+                if (state.failed) R.string.game_cover_binding_retry else R.string.game_cover_binding_in_progress,
+            ),
+            color = Color.White,
+            fontSize = if (state.failed) 8.sp else 9.sp,
+            fontWeight = if (state.failed) FontWeight.Bold else FontWeight.Medium,
+            textAlign = TextAlign.Center,
+            lineHeight = 10.sp,
+        )
     }
 }
