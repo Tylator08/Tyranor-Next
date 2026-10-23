@@ -1511,7 +1511,19 @@ private fun LazyListPlaceholder(
                     stringResource(R.string.engine_settings_winlator_dxwrapper_title),
                     winlatorDxWrapperOptions(),
                     winlator.dxwrapper,
-                ) { onWinlator(winlator.copy(dxwrapper = it)) }
+                ) {
+                    onWinlator(
+                        winlator.copy(
+                            dxwrapper = it,
+                            // 切离 WineD3D 时清空全局渲染器，避免单游戏「跟随全局」继续显示旧 GDI/GL。
+                            wined3dRenderer = if (it == WinlatorContract.DXWRAPPER_WINED3D) {
+                                winlator.wined3dRenderer
+                            } else {
+                                ""
+                            },
+                        ),
+                    )
+                }
                 if (winlator.dxwrapper == WinlatorContract.DXWRAPPER_WINED3D) {
                     DropdownRow(
                         stringResource(R.string.engine_settings_winlator_wined3d_renderer_title),
