@@ -62,6 +62,11 @@ import com.tyranor.next.ui.common.AppAlertDialog
 import com.tyranor.next.ui.common.NoIndication
 import com.tyranor.next.ui.common.DialogTextButton
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.DisposableEffect
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import com.tyranor.next.core.i18n.AppLocaleController
 import androidx.compose.foundation.LocalIndication
 import com.tyranor.next.ui.common.AppNavItem
 import com.tyranor.next.ui.common.AppSearchField
@@ -420,6 +425,22 @@ fun PerGameSettingsScreen(game: ScanGame) {
     val globalXs4Joypad = EngineSettingsStore.getXs4Joypad(ctx)
     val globalXs4Msgskip = EngineSettingsStore.getXs4MsgskipDelay(ctx)
     val globalWinlator = remember { EngineSettingsStore.loadWinlator(ctx) }
+    var lastKnownGlobal by remember { mutableStateOf(globalWinlator) }
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                val latest = EngineSettingsStore.loadWinlator(ctx)
+                if (latest != lastKnownGlobal) {
+                    lastKnownGlobal = latest
+                    // 全局 Winlator 改动后重建，保证「跟随全局」下拉文案读取新值。
+                    AppLocaleController.findActivity(ctx)?.recreate()
+                }
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
     val globalPpssppVersion = EngineSettingsStore.getPpssppVersion(ctx)
     val globalWebShellPort = EngineSettingsStore.getWebShellPort(ctx)
     val ppssppVersionMap = ppssppVersionOptionsMap()
