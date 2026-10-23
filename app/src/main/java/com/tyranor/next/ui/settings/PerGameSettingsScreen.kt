@@ -1340,7 +1340,13 @@ fun PerGameSettingsScreen(game: ScanGame) {
                             winlatorDxWrapperMap,
                             globalWinlator.dxwrapper,
                             winlatorDxwrapper,
-                        ) { winlatorDxwrapper = it }
+                        ) {
+                            winlatorDxwrapper = it
+                            // 切到非 WineD3D 时清掉渲染器覆盖，避免隐藏后仍残留 GDI/GL/Vulkan。
+                            if ((it ?: globalWinlator.dxwrapper) != WinlatorContract.DXWRAPPER_WINED3D) {
+                                winlatorWined3dRenderer = null
+                            }
+                        }
                         // 未覆盖（null）时运行时用全局值；显式空串仍表示「跟随容器」，不回退到全局。
                         val effectiveDxWrapper = winlatorDxwrapper ?: globalWinlator.dxwrapper
                         if (effectiveDxWrapper == WinlatorContract.DXWRAPPER_WINED3D) {
