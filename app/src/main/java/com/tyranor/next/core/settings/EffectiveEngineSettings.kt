@@ -198,7 +198,10 @@ object EffectiveEngineSettings {
         global: EngineSettingsStore.Winlator,
         override: WinlatorOverride?,
     ): EngineSettingsStore.Winlator {
-        if (override == null) return global
+        if (override == null) {
+            // 全局模式同样要忽略非 WineD3D 下残留的渲染器。
+            return if (global.dxwrapper == "wined3d") global else global.copy(wined3dRenderer = "")
+        }
         return global.copy(
             containerId = override.containerId?.let {
                 it.trim().filter(Char::isDigit).toIntOrNull()?.coerceAtLeast(0) ?: 0
