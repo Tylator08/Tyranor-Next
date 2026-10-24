@@ -1049,14 +1049,18 @@ object EngineLauncher {
                 PerGameSettingsStore.F_WINLATOR_SHORTCUT,
             )?.trim()
                 ?.removeSuffix(".desktop")
-                ?.replace('/', '_')
-                ?.replace('\\', '_')
                 ?.takeIf { it.isNotEmpty() }
             val exeBase = path
                 ?.let { YurisLaunchFiles.resolveExeName(game, it) }
                 ?.substringBeforeLast('.')
                 ?.takeIf { it.isNotBlank() }
-            val name = explicitName ?: exeBase ?: game.title
+            // 兜底值也可能是带分隔符的游戏标题：先选最终名称，再统一把斜杠换成下划线，
+            // 避免拼出 Desktop/A/B.desktop 这样的子路径。
+            val name = (explicitName ?: exeBase ?: game.title)
+                .replace('/', '_')
+                .replace('\\', '_')
+                .trim()
+                .ifEmpty { "shortcut" }
             val shortcutPath = "/data/data/${WinlatorContract.PACKAGE_NAME}/files/rootfs/home/xuser-$resolvedContainerId" +
                 "/.wine/drive_c/users/xuser/Desktop/$name.desktop"
             val result = ExternalEmulatorLauncher.launchWinlatorShortcut(

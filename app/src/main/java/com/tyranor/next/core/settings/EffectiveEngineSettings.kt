@@ -202,7 +202,7 @@ object EffectiveEngineSettings {
             // 全局模式同样要忽略非 WineD3D 下残留的渲染器。
             return if (global.dxwrapper == "wined3d") global else global.copy(wined3dRenderer = "")
         }
-        return global.copy(
+        val merged = global.copy(
             containerId = override.containerId?.let {
                 it.trim().filter(Char::isDigit).toIntOrNull()?.coerceAtLeast(0) ?: 0
             } ?: global.containerId,
@@ -236,6 +236,9 @@ object EffectiveEngineSettings {
             } ?: global.envVars,
             save = resolveBool(override.save, global.save),
         )
+        // 覆盖后同样按生效的图形加速归一：非 WineD3D 时不保留继承/覆盖来的渲染器，
+        // 否则两个分支的返回值语义不一致。
+        return if (merged.dxwrapper == "wined3d") merged else merged.copy(wined3dRenderer = "")
     }
 }
 
