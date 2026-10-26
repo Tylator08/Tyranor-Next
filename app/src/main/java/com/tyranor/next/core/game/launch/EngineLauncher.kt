@@ -1048,7 +1048,9 @@ object EngineLauncher {
                 game.uri,
                 PerGameSettingsStore.F_WINLATOR_SHORTCUT,
             )?.trim()
-                ?.removeSuffix(".desktop")
+                ?.let { name ->
+                    if (name.endsWith(".desktop", ignoreCase = true)) name.dropLast(".desktop".length) else name
+                }
                 ?.takeIf { it.isNotEmpty() }
             val exeBase = path
                 ?.let { YurisLaunchFiles.resolveExeName(game, it) }
@@ -1059,7 +1061,9 @@ object EngineLauncher {
             val name = (explicitName ?: exeBase ?: game.title)
                 .replace('/', '_')
                 .replace('\\', '_')
+                .filter { !it.isISOControl() }
                 .trim()
+                .take(64)
                 .ifEmpty { "shortcut" }
             val shortcutPath = "/data/data/${WinlatorContract.PACKAGE_NAME}/files/rootfs/home/xuser-$resolvedContainerId" +
                 "/.wine/drive_c/users/xuser/Desktop/$name.desktop"
