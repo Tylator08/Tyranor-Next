@@ -401,16 +401,17 @@ internal fun winlatorWinComponentTitle(key: String): String = stringResource(
 internal fun winlatorBox64PresetOptions(): List<Pair<String, String>> =
     EngineSettingsStore.WINLATOR_BOX64_PRESETS.map { v -> v to winlatorBox64PresetLabel(v) }
 
-/** Box64 预设标签：四个内置档位对齐 Winlator 中文名，自定义值原样显示。 */
+/** Box64 预设标签：四个内置档位使用本地化名称；自定义值先按 core 规则规范化再显示，避免显示值与下发值不一致。 */
 @Composable
-internal fun winlatorBox64PresetLabel(preset: String): String = when (preset) {
-    "" -> stringResource(R.string.engine_settings_winlator_follow_container)
-    "STABILITY" -> stringResource(R.string.engine_settings_winlator_box64_stability)
-    "CONSERVATIVE" -> stringResource(R.string.engine_settings_winlator_box64_conservative)
-    "INTERMEDIATE" -> stringResource(R.string.engine_settings_winlator_box64_intermediate)
-    "PERFORMANCE" -> stringResource(R.string.engine_settings_winlator_box64_performance)
-    else -> preset
-}
+internal fun winlatorBox64PresetLabel(preset: String): String =
+    when (val normalized = EngineSettingsStore.normalizeWinlatorBox64Preset(preset)) {
+        "" -> stringResource(R.string.engine_settings_winlator_follow_container)
+        "STABILITY" -> stringResource(R.string.engine_settings_winlator_box64_stability)
+        "CONSERVATIVE" -> stringResource(R.string.engine_settings_winlator_box64_conservative)
+        "INTERMEDIATE" -> stringResource(R.string.engine_settings_winlator_box64_intermediate)
+        "PERFORMANCE" -> stringResource(R.string.engine_settings_winlator_box64_performance)
+        else -> normalized
+    }
 
 /** 分辨率固定档位（无自定义输入）：`宽x高 (宽高比)`，宽度按 3 位数字分档便于扫读。 */
 @Composable

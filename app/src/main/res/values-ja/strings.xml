@@ -418,18 +418,17 @@
     <string name="engine_settings_winlator_container_id_summary">0 または空欄 = 自動（最近使用 / 唯一 / 最初のコンテナ）</string>
     <string name="engine_settings_winlator_container_name_title">コンテナ名</string>
     <string name="engine_settings_winlator_container_name_summary">空欄 = 自動。コンテナ ID がコンテナ名より優先されます</string>
+    <string name="engine_settings_winlator_group_container">コンテナマッチング</string>
+    <string name="engine_settings_winlator_box64_custom_preset">カスタムプリセット（%1$s）</string>
     <string name="engine_settings_winlator_group_graphics">グラフィックと実行環境</string>
-    <string name="engine_settings_winlator_group_box64">BOX64</string>
+    <string name="engine_settings_winlator_group_box64">Box64</string>
     <string name="engine_settings_winlator_box64_stability">安定モード</string>
     <string name="engine_settings_winlator_box64_conservative">互換モード</string>
     <string name="engine_settings_winlator_box64_intermediate">バランスモード</string>
     <string name="engine_settings_winlator_box64_performance">パフォーマンスモード</string>
-    <string name="engine_settings_winlator_box64_current">現在：%1$s</string>
-    <string name="engine_settings_winlator_box64_follow_global">グローバルに従う：%1$s</string>
-    <string name="engine_settings_winlator_box64_follow_container">コンテナに従う</string>
     <string name="engine_settings_winlator_group_windows">Windows コンポーネント</string>
     <string name="engine_settings_winlator_group_advanced">詳細起動設定</string>
-    <string name="engine_settings_winlator_group_save">コンテナ設定に書き込む</string>
+    <string name="engine_settings_winlator_group_save">保存</string>
     <string name="engine_settings_winlator_group_shortcut">ショートカット起動</string>
     <string name="engine_settings_winlator_graphics_driver_title">グラフィックドライバ</string>
     <string name="engine_settings_winlator_dxwrapper_title">グラフィックアクセラレーション</string>

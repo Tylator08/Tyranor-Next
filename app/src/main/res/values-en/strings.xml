@@ -418,18 +418,17 @@
     <string name="engine_settings_winlator_container_id_summary">0 or empty = auto (last used / only / first container)</string>
     <string name="engine_settings_winlator_container_name_title">Container name</string>
     <string name="engine_settings_winlator_container_name_summary">Empty = auto; container ID takes precedence over the name</string>
+    <string name="engine_settings_winlator_group_container">Container matching</string>
+    <string name="engine_settings_winlator_box64_custom_preset">Custom preset (%1$s)</string>
     <string name="engine_settings_winlator_group_graphics">Graphics and runtime</string>
-    <string name="engine_settings_winlator_group_box64">BOX64</string>
+    <string name="engine_settings_winlator_group_box64">Box64</string>
     <string name="engine_settings_winlator_box64_stability">Stability</string>
     <string name="engine_settings_winlator_box64_conservative">Compatibility</string>
     <string name="engine_settings_winlator_box64_intermediate">Balanced</string>
     <string name="engine_settings_winlator_box64_performance">Performance</string>
-    <string name="engine_settings_winlator_box64_current">Current: %1$s</string>
-    <string name="engine_settings_winlator_box64_follow_global">Follow global: %1$s</string>
-    <string name="engine_settings_winlator_box64_follow_container">Follow container</string>
     <string name="engine_settings_winlator_group_windows">Windows components</string>
     <string name="engine_settings_winlator_group_advanced">Advanced launch settings</string>
-    <string name="engine_settings_winlator_group_save">Write to container config</string>
+    <string name="engine_settings_winlator_group_save">Save</string>
     <string name="engine_settings_winlator_group_shortcut">Shortcut launch</string>
     <string name="engine_settings_winlator_graphics_driver_title">Graphics driver</string>
     <string name="engine_settings_winlator_dxwrapper_title">DX wrapper</string>

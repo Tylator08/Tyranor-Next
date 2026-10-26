@@ -1331,7 +1331,7 @@ fun PerGameSettingsScreen(game: ScanGame) {
                 }
 
                 if (game.engine in WINLATOR_LAUNCH_ENGINES) item {
-                    SectionCard(stringResource(R.string.engine_settings_winlator_group_graphics)) {
+                    SectionCard(stringResource(R.string.engine_settings_winlator_group_container)) {
                         OverrideText(
                             label = stringResource(R.string.engine_settings_winlator_container_id_title),
                             globalValue = if (globalWinlator.containerId > 0) globalWinlator.containerId.toString() else "",
@@ -1344,7 +1344,14 @@ fun PerGameSettingsScreen(game: ScanGame) {
                             globalValue = globalWinlator.containerName,
                             override = winlatorContainerName,
                             hint = stringResource(R.string.engine_settings_winlator_container_name_summary),
+                            sanitize = { it.filter { ch -> !ch.isISOControl() }.take(64) },
+                            validate = { it.length <= 64 },
                         ) { winlatorContainerName = it }
+                    }
+                }
+
+                if (game.engine in WINLATOR_LAUNCH_ENGINES) item {
+                    SectionCard(stringResource(R.string.engine_settings_winlator_group_graphics)) {
                         OverrideChoice(
                             stringResource(R.string.engine_settings_winlator_graphics_driver_title),
                             winlatorDriverMap,
@@ -1399,35 +1406,17 @@ fun PerGameSettingsScreen(game: ScanGame) {
 
                 if (game.engine in WINLATOR_LAUNCH_ENGINES) item {
                     SectionCard(stringResource(R.string.engine_settings_winlator_group_box64)) {
+                        // 悬空/自定义值（如 CUSTOM-3）作为额外选项显示，避免下拉把实际下发的值显示成「跟随全局」。
+                        val box64Options = winlatorBox64PresetMap.toMutableMap()
+                        winlatorBox64Preset
+                            ?.takeIf { it.isNotBlank() && it !in box64Options }
+                            ?.let { box64Options[it] = stringResource(R.string.engine_settings_winlator_box64_custom_preset, it) }
                         OverrideChoice(
                             stringResource(R.string.engine_settings_winlator_box64_preset_title),
-                            winlatorBox64PresetMap,
+                            box64Options,
                             globalWinlator.box64Preset,
                             winlatorBox64Preset,
                         ) { winlatorBox64Preset = it }
-                        // 当前生效值：显式覆盖 → 跟随全局值 → 全局也交给容器。
-                        val box64Current = when {
-                            winlatorBox64Preset != null -> stringResource(
-                                R.string.engine_settings_winlator_box64_current,
-                                winlatorBox64PresetMap[winlatorBox64Preset] ?: winlatorBox64Preset.orEmpty(),
-                            )
-
-                            globalWinlator.box64Preset.isNotBlank() -> stringResource(
-                                R.string.engine_settings_winlator_box64_follow_global,
-                                winlatorBox64PresetMap[globalWinlator.box64Preset] ?: globalWinlator.box64Preset,
-                            )
-
-                            else -> stringResource(
-                                R.string.engine_settings_winlator_box64_follow_global,
-                                stringResource(R.string.engine_settings_winlator_box64_follow_container),
-                            )
-                        }
-                        Text(
-                            box64Current,
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 6.dp),
-                        )
                     }
                 }
 
