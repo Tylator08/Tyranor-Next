@@ -1406,11 +1406,15 @@ fun PerGameSettingsScreen(game: ScanGame) {
 
                 if (game.engine in WINLATOR_LAUNCH_ENGINES) item {
                     SectionCard(stringResource(R.string.engine_settings_winlator_group_box64)) {
-                        // 悬空/自定义值（如 CUSTOM-3）作为额外选项显示，避免下拉把实际下发的值显示成「跟随全局」。
+                        // 悬空/自定义值（单游戏覆盖或全局继承，如 CUSTOM-3）都作为额外选项显示，
+                        // 避免下拉把实际下发的值显示成「跟随全局」或裸协议值。
                         val box64Options = winlatorBox64PresetMap.toMutableMap()
-                        winlatorBox64Preset
-                            ?.takeIf { it.isNotBlank() && it !in box64Options }
-                            ?.let { box64Options[it] = stringResource(R.string.engine_settings_winlator_box64_custom_preset, it) }
+                        listOfNotNull(winlatorBox64Preset, globalWinlator.box64Preset)
+                            .filter { it.isNotBlank() && it !in box64Options }
+                            .forEach { preset ->
+                                box64Options[preset] =
+                                    stringResource(R.string.engine_settings_winlator_box64_custom_preset, preset)
+                            }
                         OverrideChoice(
                             stringResource(R.string.engine_settings_winlator_box64_preset_title),
                             box64Options,
