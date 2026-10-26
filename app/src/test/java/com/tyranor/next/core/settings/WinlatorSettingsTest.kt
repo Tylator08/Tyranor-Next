@@ -249,6 +249,18 @@ class WinlatorSettingsTest {
         assertEquals("A=1", inherited.envVars)
     }
 
+    /** Box64 预设：显式空串 = 跟随容器（不下发），缺失覆盖 = 继承全局。 */
+    @Test
+    fun box64PresetOverrideDistinguishesContainerFromInheritance() {
+        val global = EngineSettingsStore.Winlator(box64Preset = "STABILITY")
+
+        val container = EffectiveEngineSettings.mergeWinlator(global, WinlatorOverride(box64Preset = ""))
+        assertEquals("", container.box64Preset)
+
+        val inherited = EffectiveEngineSettings.mergeWinlator(global, WinlatorOverride())
+        assertEquals("STABILITY", inherited.box64Preset)
+    }
+
     /** 缺失覆盖继承全局；显式空值、旧 wrapper 迁移与新预设保持各自语义。 */
     @Test
     fun dxWrapperOverrideDistinguishesInheritanceContainerAndExplicitPresets() {
