@@ -71,8 +71,9 @@ internal object GameOverridePartitions {
     const val KEY_RPG_SPEED_UP = "rpg_speed_up"
     const val KEY_RPG_FONT_SCALE = "rpg_font_scale"
     const val KEY_TY_SCOPED = "ty_scoped"
-    // Winlator 无独立分区：覆盖参数随 tyrano 分区持久化，全部显式建模，
-    // 避免未来收紧分区时靠「未识别键兜底」静默丢键。
+    // Winlator 无独立分区：运行模式与全部覆盖参数随 tyrano 分区持久化，
+    // 全部显式建模，避免未来收紧分区时靠「未识别键兜底」静默丢键。
+    const val KEY_WINLATOR_MODE = "winlator_mode"
     const val KEY_WINLATOR_CONTAINER_ID = "winlator_container_id"
     const val KEY_WINLATOR_CONTAINER_NAME = "winlator_container_name"
     const val KEY_WINLATOR_SHORTCUT = "winlator_shortcut"
@@ -148,7 +149,7 @@ internal object GameOverridePartitions {
     // v0 宿主与 v1/v2 宿主的逐游戏覆盖都在这一条 blob 里，显式建模，
     // 不依赖“未识别键兜底归入 tyrano”的 else 路径，防止未来收紧分区时丢键
     val TYRANO_KEYS: Set<String> = setOf(
-        KEY_TY_SCOPED,
+        KEY_TY_SCOPED, KEY_WINLATOR_MODE,
         KEY_WINLATOR_CONTAINER_ID, KEY_WINLATOR_CONTAINER_NAME,
         KEY_WINLATOR_SHORTCUT, KEY_WINLATOR_SHORTCUT_CONTAINER_ID,
         KEY_WINLATOR_GRAPHICS_DRIVER, KEY_WINLATOR_DXWRAPPER, KEY_WINLATOR_WINED3D_RENDERER,

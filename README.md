@@ -65,7 +65,7 @@ YU-RIS（Windows）游戏通过外置 Winlator（winlator-cn）运行：扫描�
 
 内置 Web 运行环境同时支持部分以 `app.asar` 打包的 NW\.js 游戏；启动时会根据归档内容进一步识别具体类型。
 Ren'Py 与 RPG Maker XP/VX/VX Ace/mkxp-z 当前通过外置 APK 模块运行：Ren'Py 支持 8.5 / 7.7.1 版本，可在全局或单游戏设置中选择引擎版本；自动模式会读取 Ren'Py `script_version` 与 Python2 运行库特征，在 8.5 / 7.7.1 模块间匹配。主 App 默认启用该能力，仅在引擎页检查目标模块是否已安装；未安装时引擎 item 显示打叉并提示下载安装。RPG Maker MV/MZ 属于 Web runtime，继续使用内置 Web 运行环境。
-PC 游戏（任意 Windows 程序）通过游戏页顶栏「添加 PC 游戏」手动入库（不参与扫描）：选择目录并从目录检索 exe、指定启动程序；启动经外置 Winlator，启动文件可在游戏详情中随时切换。PC 游戏不纳入统一存档管理；可在单游戏设置中逐项覆盖 Winlator 参数，并选择 WineD3D + GDI 预设。
+PC 游戏（任意 Windows 程序）通过游戏页顶栏「添加 PC 游戏」手动入库（不参与扫描）：选择目录并从目录检索 exe、指定启动程序；启动经外置 Winlator，启动文件可在游戏详情中随时切换。PC 游戏不纳入统一存档管理；单游戏 Winlator 设置提供「跟随全局 / 跟随容器 / 自定义」三种运行模式，自定义下可逐项覆盖参数；容器同时填写 ID 与名称时以 ID 为准，只填名称时会清除继承的容器 ID。**从 1.61 升级时注意**：只填过容器名的旧记录会改为按名称选择容器，不再沿用全局容器 ID；六项参数全空的旧记录会归为「跟随容器」，其 `save` 固定为不写回容器（1.61 会继承记录或全局的 `save`）。 切换运行模式并保存不会清空另一种模式已填的参数，切回即可恢复；若把数据降级到忽略 `winlator_mode` 的旧版本，这些隐藏值会重新生效。
 
 PSP 与 Nintendo Switch 游戏通过外置模拟器跳转运行：扫描按 ROM 扩展名识别并逐条入库（.iso/.cso/.pbp/.chd、.nsp/.xci/.nca/.nro），启动时按类型拉起已安装的 PPSSPP / Eden（显式组件 + 读取授权，使用 SAF 内容 URI；文件回退路径经 FileProvider 转换）。这两类游戏的存档与设置由模拟器自行管理，主 App 不接管；引擎页「外置跳转支持」入口可查看安装状态并跳转下载页。引擎页可在应用设置中开启「引擎页分类显示」，按 GAL / RPGM / 主机 / 网页 分页展示引擎项。
 
@@ -149,6 +149,7 @@ UI 层按页面域继续拆分：
 - **语言**：Kotlin（引擎层含 Java 桥接代码）
 - **UI**：Jetpack Compose + Material 3 + [Miuix](https://github.com/compose-miuix-ui/miuix)
 - **导航**：底部导航 `NavigationBar`；主 Tab 内容页使用水平移动切换，详情/设置等独立 Activity 进入使用向上翻页、退出使用向下翻页
+- **顶栏与外观**：顶栏与正文恢复上下分离，不叠加顶栏渐进模糊（[#133](https://github.com/Weiss-UltimateSavior/Tyranor-Next/issues/133)）；默认背景渐变与底栏/侧栏/悬浮按钮的玻璃效果不变
 - **构建**：Gradle 9.5.1 / AGP 9.2.1 / Kotlin 2.x + Compose Compiler，`compileSdk 37`、`minSdk 26`、`targetSdk 36`
 - **持久化**：Room v2（游戏库、扫描根、最近打开时间、快捷启动、单游戏覆盖与识别缓存）+ SharedPreferences（应用/引擎设置、跨进程配置及旧库恢复镜像）
 - **文件访问**：Storage Access Framework（SAF）管理外部游戏目录，`documentFile` 库辅助
