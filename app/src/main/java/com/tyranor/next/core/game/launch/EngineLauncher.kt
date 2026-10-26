@@ -1059,7 +1059,9 @@ object EngineLauncher {
             val name = (explicitName ?: exeBase ?: game.title)
                 .replace('/', '_')
                 .replace('\\', '_')
+                .filter { !it.isISOControl() }
                 .trim()
+                .take(64)
                 .ifEmpty { "shortcut" }
             val shortcutPath = "/data/data/${WinlatorContract.PACKAGE_NAME}/files/rootfs/home/xuser-$resolvedContainerId" +
                 "/.wine/drive_c/users/xuser/Desktop/$name.desktop"

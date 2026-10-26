@@ -319,8 +319,9 @@ object PerGameSettingsStore {
         // 旧版预设（wined3d_gl/gdi）读入即归一回 wined3d + renderer，渲染器的显式覆盖优先。
         val legacyRenderer = EngineSettingsStore.winlatorLegacyRenderer(rawDxWrapper)
         val override = WinlatorOverride(
-            containerId = strOrNull(F_WINLATOR_CONTAINER_ID),
-            containerName = strOrNull(F_WINLATOR_CONTAINER_NAME),
+            // 空串统一归一为「未覆盖」：旧数据里弹窗确认空值会写 "，与 UI 现在的 null 语义对齐。
+            containerId = strOrNull(F_WINLATOR_CONTAINER_ID)?.takeIf { it.isNotBlank() },
+            containerName = strOrNull(F_WINLATOR_CONTAINER_NAME)?.takeIf { it.isNotBlank() },
             graphicsDriver = strOrNull(F_WINLATOR_GRAPHICS_DRIVER),
             dxwrapper = if (legacyRenderer != null) WinlatorContract.DXWRAPPER_WINED3D else rawDxWrapper,
             wined3dRenderer = if (legacyRenderer != null) {
