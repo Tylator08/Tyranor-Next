@@ -179,7 +179,7 @@
     <string name="engine_settings_yuris_hint">このゲームは外部 Winlator で実行されます。起動プログラムはゲーム詳細の「起動ファイル」で変更できます。セーブはゲームフォルダーの save/ に保存され、ランチャーの統一セーブ管理で扱えます。実行設定は下の Winlator カードで項目ごとに上書きできます。</string>
     <string name="engine_settings_pc_hint">このゲームは外部 Winlator で実行されます。起動プログラムはゲーム詳細の「起動ファイル」で変更できます。セーブ管理はありません。実行設定は下の Winlator カードで項目ごとに上書きできます。</string>
     <string name="engine_settings_android_hint">このゲームはインストール済みの Android アプリです。ライブラリから起動するとアプリが直接開きます。セーブ管理とエンジン設定はありません。</string>
-    <string name="engine_settings_winlator_per_game_note">上書きはこのゲームにのみ適用されます。各項目は「グローバルに従う」に戻せます。空欄（コンテナ設定に従う）はそのパラメータを送信せず、Winlator のコンテナ設定に委ねます。「グラフィックアクセラレーション」が WineD3D のときはレンダラーを選択でき、WineD3D 設定全体が置き換わります（他の詳細項目は既定値）。「コンテナ設定に書き込む」が有効なら、これらのパラメータも保存されます。</string>
+    <string name="engine_settings_winlator_per_game_note">上書きはこのゲームにのみ適用されます。各項目は「グローバルに従う」に戻せます。空欄（コンテナ設定を使用）はそのパラメータを送信せず、Winlator のコンテナ設定に委ねます。「グラフィックアクセラレーション」が WineD3D のときはレンダラーを選択でき、WineD3D 設定全体が置き換わります（他の詳細項目は既定値）。「コンテナ設定に書き込む」が有効なら、これらのパラメータも保存されます。</string>
     <string name="launch_emulator_missing">%1$s がインストールされていません。「外部エミュレータ連携」からダウンロードしてください</string>
     <string name="launch_emulator_no_activity">%1$s にゲームを受け取る入口がありません</string>
     <string name="launch_emulator_denied">%1$s の起動がシステムに拒否されました</string>
@@ -453,7 +453,7 @@
     <string name="engine_settings_winlator_shortcut_auto">自動（起動ファイル名）</string>
     <string name="engine_settings_winlator_shortcut_container_id_title">ショートカットのコンテナ ID</string>
     <string name="engine_settings_winlator_shortcut_container_id_summary">ショートカット起動に使うコンテナ ID。空欄の場合はゲーム個別 ID、グローバル ID、コンテナ 1 の順にフォールバックします</string>
-    <string name="engine_settings_winlator_shortcut_container_default">既定のコンテナ 1</string>
+    <string name="engine_settings_winlator_shortcut_container_default">自動（ゲーム個別 → グローバル → コンテナ 1）</string>
     <string name="engine_settings_winlator_shortcut_note">ショートカット起動は Winlator に既存の .desktop を開くだけで、グラフィック/実行パラメータを送信せず、コンテナ設定も書き換えません。名前が空欄の場合は起動ファイル名またはゲームタイトルから推測します。複数コンテナを使う場合は ID を明示してください。</string>
     <string name="engine_settings_winlator_screen_size_title">解像度</string>
     <string name="engine_settings_winlator_lc_all_title">ロケール（LC_ALL）</string>

@@ -179,7 +179,7 @@
     <string name="engine_settings_yuris_hint">该游戏由外置 Winlator 运行；启动程序可在游戏详情「启动文件」中调整。存档位于游戏目录 save/，已纳入统一存档管理；运行参数可在下方 Winlator 卡片中逐项覆盖。</string>
     <string name="engine_settings_pc_hint">该游戏经外置 Winlator 运行；启动程序可在游戏详情「启动文件」中切换。无存档管理；运行参数可在下方 Winlator 卡片中逐项覆盖。</string>
     <string name="engine_settings_android_hint">该游戏为已安装的 Android 应用；从游戏库启动将直接跳转打开该应用。无存档管理与引擎设置。</string>
-    <string name="engine_settings_winlator_per_game_note">覆盖仅对本游戏生效；每项可单独切回「跟随全局」。留空（跟随容器配置）表示不下发该参数，交由 Winlator 按容器配置处理。「图形加速」选 WineD3D 时可再选渲染器，该渲染器会整项替换容器的 WineD3D 配置，其它子参数使用默认值；开启「写入容器配置」时也会保存这些参数。</string>
+    <string name="engine_settings_winlator_per_game_note">覆盖仅对本游戏生效；每项可单独切回「跟随全局」。留空（按容器配置）表示不下发该参数，交由 Winlator 按容器配置处理。「图形加速」选 WineD3D 时可再选渲染器，该渲染器会整项替换容器的 WineD3D 配置，其它子参数使用默认值；开启「写入容器配置」时也会保存这些参数。</string>
     <string name="launch_emulator_missing">未安装 %1$s，请在“外置跳转支持”中下载</string>
     <string name="launch_emulator_no_activity">%1$s 未提供可接收游戏的入口</string>
     <string name="launch_emulator_denied">%1$s 启动被系统拒绝</string>
@@ -453,7 +453,7 @@
     <string name="engine_settings_winlator_shortcut_auto">自动匹配（按启动文件名）</string>
     <string name="engine_settings_winlator_shortcut_container_id_title">快捷方式容器 ID</string>
     <string name="engine_settings_winlator_shortcut_container_id_summary">快捷方式启动使用的容器 ID；留空时依次沿用逐游戏容器 ID、全局容器 ID，最后才是容器 1</string>
-    <string name="engine_settings_winlator_shortcut_container_default">默认容器 1</string>
+    <string name="engine_settings_winlator_shortcut_container_default">自动（逐游戏 → 全局 → 容器 1）</string>
     <string name="engine_settings_winlator_shortcut_note">快捷方式启动只打开 Winlator 里已存在的 .desktop，不下发图形/运行参数，也不写回容器配置。名称留空时按启动文件名或游戏标题推导；多容器需明确填写容器 ID。</string>
     <string name="engine_settings_winlator_screen_size_title">分辨率</string>
     <string name="engine_settings_winlator_lc_all_title">语言环境（LC_ALL）</string>
