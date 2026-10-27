@@ -77,6 +77,63 @@ class WinlatorContractTest {
 
     /** 仅在开启保存时下发 save=true，关闭时不发送该参数。 */
     @Test
+    fun winComponentsAreSentThroughOverridesJson() {
+        val wincomponents = "direct3d=1,directsound=1,xaudio=0,vcrun2010=1"
+        val extras = WinlatorContract.extras(
+            WinlatorContract.LaunchOptions(winComponents = wincomponents),
+        )
+
+        assertEquals(
+            """{"${WinlatorContract.OVERRIDE_WINCOMPONENTS}":"$wincomponents"}""",
+            extras[WinlatorContract.EXTRA_OVERRIDES],
+        )
+    }
+
+    @Test
+    fun overridesJsonCarriesBox64AndWinComponentsTogether() {
+        val extras = WinlatorContract.extras(
+            WinlatorContract.LaunchOptions(
+                box64Preset = "PERFORMANCE",
+                winComponents = "direct3d=1",
+            ),
+        )
+
+        val overrides = org.json.JSONObject(extras[WinlatorContract.EXTRA_OVERRIDES] as String)
+        assertEquals("PERFORMANCE", overrides.getString(WinlatorContract.OVERRIDE_BOX64_PRESET))
+        assertEquals("direct3d=1", overrides.getString(WinlatorContract.OVERRIDE_WINCOMPONENTS))
+    }
+
+    @Test
+    fun audioDriverAndEnvVarsAreSentThroughOverridesJson() {
+        val extras = WinlatorContract.extras(
+            WinlatorContract.LaunchOptions(
+                audioDriver = "pulseaudio",
+                envVars = "DXVK_HUD=1 MESA_EXTENSION_MAX_YEAR=2003",
+            ),
+        )
+
+        val overrides = org.json.JSONObject(extras[WinlatorContract.EXTRA_OVERRIDES] as String)
+        assertEquals("pulseaudio", overrides.getString(WinlatorContract.OVERRIDE_AUDIO_DRIVER))
+        assertEquals("DXVK_HUD=1 MESA_EXTENSION_MAX_YEAR=2003", overrides.getString(WinlatorContract.OVERRIDE_ENV_VARS))
+    }
+
+    @Test
+    fun wined3dRendererIsSentAsDxwrapperConfigOnlyForWined3d() {
+        val wined3d = WinlatorContract.extras(
+            WinlatorContract.LaunchOptions(dxwrapper = "wined3d", wined3dRenderer = "vulkan"),
+        )
+        assertEquals(
+            """{"${WinlatorContract.OVERRIDE_DXWRAPPER_CONFIG}":"renderer=vulkan"}""",
+            wined3d[WinlatorContract.EXTRA_OVERRIDES],
+        )
+
+        val dxvk = WinlatorContract.extras(
+            WinlatorContract.LaunchOptions(dxwrapper = "dxvk", wined3dRenderer = "vulkan"),
+        )
+        assertFalse(dxvk.containsKey(WinlatorContract.EXTRA_OVERRIDES))
+    }
+
+    @Test
     fun saveIsSentOnlyWhenEnabled() {
         assertEquals(true, WinlatorContract.extras(WinlatorContract.LaunchOptions(save = true))[WinlatorContract.EXTRA_SAVE])
         assertFalse(WinlatorContract.extras(WinlatorContract.LaunchOptions(save = false)).containsKey(WinlatorContract.EXTRA_SAVE))

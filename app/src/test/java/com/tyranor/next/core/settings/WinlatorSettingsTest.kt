@@ -36,6 +36,15 @@ class WinlatorSettingsTest {
 
     /** Box64 预设接受内置名称与 CUSTOM 编号，未知名称不下发。 */
     @Test
+    fun wined3dRendererOnlyAcceptsGdiGlVulkan() {
+        assertEquals("gdi", EngineSettingsStore.normalizeWinlatorWined3dRenderer("GDI"))
+        assertEquals("gl", EngineSettingsStore.normalizeWinlatorWined3dRenderer(" gl "))
+        assertEquals("vulkan", EngineSettingsStore.normalizeWinlatorWined3dRenderer("Vulkan"))
+        assertEquals("", EngineSettingsStore.normalizeWinlatorWined3dRenderer("d3d12"))
+        assertEquals("", EngineSettingsStore.normalizeWinlatorWined3dRenderer(null))
+    }
+
+    @Test
     fun box64PresetAcceptsBuiltinsAndCustom() {
         assertEquals("PERFORMANCE", EngineSettingsStore.normalizeWinlatorBox64Preset("performance"))
         assertEquals("STABILITY", EngineSettingsStore.normalizeWinlatorBox64Preset("STABILITY"))
@@ -150,16 +159,94 @@ class WinlatorSettingsTest {
 
     /** 默认参数均不下发，运行配置由 Winlator 容器决定。 */
     @Test
+    fun audioDriverOnlyAcceptsAlsaAndPulseAudio() {
+        assertEquals("alsa", EngineSettingsStore.normalizeWinlatorAudioDriver("ALSA"))
+        assertEquals("pulseaudio", EngineSettingsStore.normalizeWinlatorAudioDriver(" PulseAudio "))
+        assertEquals("", EngineSettingsStore.normalizeWinlatorAudioDriver("oss"))
+        assertEquals("", EngineSettingsStore.normalizeWinlatorAudioDriver(null))
+    }
+
+    @Test
+    fun envVarsKeepOnlyValidKeyValueTokens() {
+        assertEquals(
+            "DXVK_HUD=1 MESA_EXTENSION_MAX_YEAR=2003",
+            EngineSettingsStore.normalizeWinlatorEnvVars(" DXVK_HUD=1  bad MESA_EXTENSION_MAX_YEAR=2003 "),
+        )
+        assertEquals("", EngineSettingsStore.normalizeWinlatorEnvVars("NO_EQUALS"))
+        assertEquals("", EngineSettingsStore.normalizeWinlatorEnvVars(null))
+        assertEquals(true, EngineSettingsStore.isValidWinlatorEnvVars(""))
+        assertEquals(true, EngineSettingsStore.isValidWinlatorEnvVars("A=1 B=2"))
+        assertEquals(false, EngineSettingsStore.isValidWinlatorEnvVars("A=1 BAD"))
+        assertEquals(false, EngineSettingsStore.isValidWinlatorEnvVars("=1"))
+    }
+
+    @Test
+    fun winComponentsOnlyAcceptKnownKeysAndBuiltinNativeValues() {
+        assertEquals(
+            "direct3d=1,vcrun2010=0",
+            EngineSettingsStore.normalizeWinlatorWinComponents(
+                " vcrun2010=0 , bad=1,direct3d=2, direct3d=1 ",
+            ),
+        )
+        assertEquals("", EngineSettingsStore.normalizeWinlatorWinComponents("direct3d=container"))
+        assertEquals("", EngineSettingsStore.normalizeWinlatorWinComponents(null))
+        assertEquals(
+            "direct3d=1,directsound=1,directmusic=1,directshow=0,directplay=0,xaudio=1,vcrun2005=0,vcrun2010=1,wmdecoder=1",
+            EngineSettingsStore.normalizeWinlatorWinComponents(
+                "direct3d=1,directsound=1,directmusic=1,directshow=0,directplay=0,xaudio=1,vcrun2005=0,vcrun2010=1,wmdecoder=1",
+            ),
+        )
+    }
+
+    @Test
+    fun winComponentsOverrideKeepsContainerSentinelAndMergesPerComponent() {
+        val global = EngineSettingsStore.normalizeWinlatorWinComponents("direct3d=1,xaudio=0")
+        val override = EngineSettingsStore.setWinlatorWinComponentOverride(
+            EngineSettingsStore.setWinlatorWinComponentOverride(null, "direct3d", ""),
+            "vcrun2010",
+            "1",
+        )
+        assertEquals("direct3d=container,vcrun2010=1", override)
+        assertEquals("", EngineSettingsStore.winlatorWinComponent(global, "directsound"))
+        assertEquals("1", EngineSettingsStore.winlatorWinComponent(global, "direct3d"))
+        assertEquals("", EngineSettingsStore.winlatorWinComponentOverride(override, "direct3d"))
+
+        val merged = EngineSettingsStore.mergeWinlatorWinComponents(global, override)
+        assertEquals("xaudio=0,vcrun2010=1", merged)
+    }
+
+    @Test
+    fun winComponentsOverrideFallsBackToGlobalAndCanBeCleared() {
+        val global = "direct3d=1"
+        assertEquals(global, EngineSettingsStore.mergeWinlatorWinComponents(global, null))
+        assertEquals("", EngineSettingsStore.mergeWinlatorWinComponents(global, ""))
+        assertEquals("", EngineSettingsStore.mergeWinlatorWinComponents(global, "unknown=1"))
+        assertEquals(null, EngineSettingsStore.setWinlatorWinComponentOverride("direct3d=1", "direct3d", null))
+        assertEquals(
+            "direct3d=1,directshow=0",
+            EngineSettingsStore.setWinlatorWinComponent("direct3d=1", "directshow", "0"),
+        )
+        assertEquals(
+            "direct3d=1",
+            EngineSettingsStore.setWinlatorWinComponent("direct3d=1,directshow=0", "directshow", ""),
+        )
+    }
+
+    @Test
     fun defaultsKeepAllParametersUnset() {
         val defaults = EngineSettingsStore.Winlator()
         assertEquals(0, defaults.containerId)
         assertEquals("", defaults.containerName)
         assertEquals("", defaults.graphicsDriver)
         assertEquals("", defaults.dxwrapper)
+        assertEquals("", defaults.wined3dRenderer)
         assertEquals("", defaults.screenSize)
         assertEquals("", defaults.lcAll)
         assertEquals("", defaults.tz)
         assertEquals("", defaults.box64Preset)
+        assertEquals("", defaults.winComponents)
+        assertEquals("", defaults.audioDriver)
+        assertEquals("", defaults.envVars)
         assertEquals(false, defaults.save)
     }
 
