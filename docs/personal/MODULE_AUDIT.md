@@ -10,13 +10,16 @@
 
 | 模块 | 文件数 | 说明 |
 | --- | ---: | --- |
-| M1 Winlator | 17 | 核心 8 + 设置页 4 + 测试 4 + 文档 1 |
+| M1 Winlator | 14 | 核心 7 + 设置页 3 + 测试 4（1.76 无独立分区文件） |
 | M2 封面绑定 | 10 | 封面服务/任务/管理/游戏页/封面设置 |
 | M3 页面壁纸 | 11 | 存储/图层/主题/应用设置/主页/导航/资源 |
 | M4 封面模糊 | 2 | 存储 + 图标 |
 | M5 UI 调整 | 10 | 下拉/弹窗/布局/顶栏/首页/引擎页/图标 |
-| M6 工程/CI/文档 | 14 | CI、工具、维护文档、版本号、gitignore |
+| M6 构建版本 | 1 | app/build.gradle.kts（1.76/LeakCanary） |
 | 三语资源（共享） | 3 | values / values-en / values-ja，按键归属拆分 |
+| 合计 | 51 | 1.76 相对 bd8a94b0 的全部源码差异 |
+
+> 另 16 个文件（个人 CI、tools/personal、docs/personal、PERSONAL_FORK、.gitignore 等）是本轮迁移基础设施，不在 1.76 APK 源码内，单独归入 M6-infra。
 
 ## 2. 共享文件的方法/字段归属
 
@@ -33,6 +36,13 @@
 | AppAlertDialog.kt | 无 | 无 | 无 | 无 | containerColor/scrimAlpha 参数 |
 | AppSidePanel.kt | 无 | 无 | 无 | 无 | 个人面板条目参数 |
 | values*/strings.xml | Winlator 键 | 封面绑定键 | 壁纸键 | 模糊键 | UI/首页键 |
+
+## 2.1 1.76 与 1.62.10 的基准一致性
+
+- 1.76 源码快照：538a3395（D:/ty-build/Tyranor-Next-wc）。
+- 1.76 与 1.62.10（c2e507bc）的 Winlator 文件逐字节比较：仅 GameOverridePartitions.kt 不同（1.76 未显式登记 Winlator 键）。
+- 其余 WinlatorContract、EngineSettingsStore、EffectiveEngineSettings、EngineSettingsResolver、EngineLauncher、PerGameSettingsStore 完全一致。
+- PR #4 的 Winlator 实现因此与 1.76 同源；新增分区键属于兼容性增强，不是旧实现覆盖。
 
 ## 3. 官方实现 vs 个人扩展
 
