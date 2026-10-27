@@ -1072,7 +1072,12 @@ object EngineLauncher {
                     .trim()
                     .take(64)
                     .ifEmpty { "shortcut" }
-                val shortcutPath = "/data/data/${WinlatorContract.PACKAGE_NAME}/files/rootfs/home/xuser-$resolvedContainerId" +
+                // 工作资料/次要用户下 /data/data 不是目标应用的目录：优先用目标应用自己的 dataDir。
+                val winlatorDataDir = runCatching {
+                    context.packageManager.getApplicationInfo(WinlatorContract.PACKAGE_NAME, 0).dataDir
+                }.getOrNull()?.takeIf { it.isNotBlank() }
+                    ?: "/data/data/${WinlatorContract.PACKAGE_NAME}"
+                val shortcutPath = "$winlatorDataDir/files/rootfs/home/xuser-$resolvedContainerId" +
                     "/.wine/drive_c/users/xuser/Desktop/$name.desktop"
                 currentCoroutineContext().ensureActive()
                 val result = ExternalEmulatorLauncher.launchWinlatorShortcut(
