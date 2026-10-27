@@ -1,5 +1,6 @@
 package com.tyranor.next.core.engine.external
 
+import com.tyranor.next.core.settings.EngineSettingsStore
 import org.json.JSONObject
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -82,6 +83,32 @@ class WinlatorContractTest {
         assertFalse(WinlatorContract.extras(WinlatorContract.LaunchOptions(save = false)).containsKey(WinlatorContract.EXTRA_SAVE))
     }
 
+    /** 带 envVars 时不持久化：接收端 persistOverrides 会整体替换容器变量，避免用户配置被覆盖。 */
+    @Test
+    fun envVarsSuppressPersistence() {
+        val extras = WinlatorContract.extras(
+            WinlatorContract.LaunchOptions(save = true, envVars = "A=1"),
+        )
+        assertFalse(extras.containsKey(WinlatorContract.EXTRA_SAVE))
+        assertTrue((extras[WinlatorContract.EXTRA_OVERRIDES] as String).contains("A=1"))
+    }
+
+    /** winlator-cn 按位置比较组件串：部分串会错位并污染缓存，只有九项齐全才下发。 */
+    @Test
+    fun partialWinComponentsAreNotSent() {
+        val partial = WinlatorContract.extras(
+            WinlatorContract.LaunchOptions(winComponents = "directshow=1"),
+        )
+        val partialOverrides = partial[WinlatorContract.EXTRA_OVERRIDES] as? String
+        assertFalse(partialOverrides?.contains(WinlatorContract.OVERRIDE_WINCOMPONENTS) ?: false)
+
+        val complete = com.tyranor.next.core.settings.EngineSettingsStore.encodeWinlatorWinComponents(
+            com.tyranor.next.core.settings.EngineSettingsStore.WINLATOR_WIN_COMPONENT_KEYS.associateWith { "1" },
+        )
+        val full = WinlatorContract.extras(WinlatorContract.LaunchOptions(winComponents = complete))
+        assertTrue((full[WinlatorContract.EXTRA_OVERRIDES] as String).contains(WinlatorContract.OVERRIDE_WINCOMPONENTS))
+    }
+
     /** WineD3D 渲染器只在 wrapper 为 wined3d 时下发到首个配置槽。 */
     @Test
     fun wined3dRendererIsSentOnlyForWineD3dWrapper() {
@@ -111,6 +138,10 @@ class WinlatorContractTest {
     }
 
     /** 渲染器、Box64、组件、音频、环境变量共用一个 overrides 对象，save 保留持久化标志。 */
+    private val WIN_COMPONENTS = EngineSettingsStore.encodeWinlatorWinComponents(
+        EngineSettingsStore.WINLATOR_WIN_COMPONENT_KEYS.associateWith { "1" },
+    )
+
     @Test
     fun allOverridesAreMergedIntoOneJsonObject() {
         val extras = WinlatorContract.extras(
@@ -118,7 +149,7 @@ class WinlatorContractTest {
                 dxwrapper = WinlatorContract.DXWRAPPER_WINED3D,
                 wined3dRenderer = "gl",
                 box64Preset = "CUSTOM-3",
-                winComponents = "direct3d=1,xaudio=0",
+                winComponents = WIN_COMPONENTS,
                 audioDriver = "pulseaudio",
                 envVars = "DXVK_HUD=1",
                 save = true,
@@ -129,11 +160,12 @@ class WinlatorContractTest {
         assertEquals("wined3d", extras[WinlatorContract.EXTRA_DXWRAPPER])
         assertEquals("renderer=gl", overrides.getString(WinlatorContract.OVERRIDE_DXWRAPPER_CONFIG))
         assertEquals("CUSTOM-3", overrides.getString(WinlatorContract.OVERRIDE_BOX64_PRESET))
-        assertEquals("direct3d=1,xaudio=0", overrides.getString(WinlatorContract.OVERRIDE_WINCOMPONENTS))
+        assertEquals(WIN_COMPONENTS, overrides.getString(WinlatorContract.OVERRIDE_WINCOMPONENTS))
         assertEquals("pulseaudio", overrides.getString(WinlatorContract.OVERRIDE_AUDIO_DRIVER))
         assertEquals("DXVK_HUD=1", overrides.getString(WinlatorContract.OVERRIDE_ENV_VARS))
         assertEquals(5, overrides.length())
-        assertEquals(true, extras[WinlatorContract.EXTRA_SAVE])
+        // 带 envVars 时暂不持久化（接收端会整体替换容器变量）。
+        assertFalse(extras.containsKey(WinlatorContract.EXTRA_SAVE))
     }
 
     /** 旧选项不覆盖容器渲染器，即使同时指定 Box64 预设。 */

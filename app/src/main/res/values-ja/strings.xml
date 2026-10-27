@@ -452,7 +452,7 @@
     <string name="engine_settings_winlator_shortcut_summary">空欄 = 起動ファイル名で自動照合。Winlator に表示されるショートカット名を入力（.desktop は不要）</string>
     <string name="engine_settings_winlator_shortcut_auto">自動（起動ファイル名）</string>
     <string name="engine_settings_winlator_shortcut_container_id_title">ショートカットのコンテナ ID</string>
-    <string name="engine_settings_winlator_shortcut_container_id_summary">ショートカット起動に使うコンテナ ID。0 または空欄 = コンテナ 1</string>
+    <string name="engine_settings_winlator_shortcut_container_id_summary">ショートカット起動に使うコンテナ ID。空欄の場合はゲーム個別 ID、グローバル ID、コンテナ 1 の順にフォールバックします</string>
     <string name="engine_settings_winlator_shortcut_container_default">既定のコンテナ 1</string>
     <string name="engine_settings_winlator_shortcut_note">ショートカット起動は Winlator に既存の .desktop を開くだけで、グラフィック/実行パラメータを送信せず、コンテナ設定も書き換えません。名前が空欄の場合は起動ファイル名またはゲームタイトルから推測します。複数コンテナを使う場合は ID を明示してください。</string>
     <string name="engine_settings_winlator_screen_size_title">解像度</string>

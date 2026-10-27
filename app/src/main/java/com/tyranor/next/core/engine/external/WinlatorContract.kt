@@ -1,5 +1,6 @@
 package com.tyranor.next.core.engine.external
 
+import com.tyranor.next.core.settings.EngineSettingsStore
 import org.json.JSONObject
 
 /**
@@ -123,7 +124,10 @@ object WinlatorContract {
             overrides.put(OVERRIDE_BOX64_PRESET, it)
         }
         options.winComponents.trim().takeIf { it.isNotEmpty() }?.let {
-            overrides.put(OVERRIDE_WINCOMPONENTS, it)
+            // winlator-cn 按位置比较组件串：部分串会错位并污染缓存，只在九项齐全时下发。
+            if (EngineSettingsStore.isCompleteWinlatorWinComponents(it)) {
+                overrides.put(OVERRIDE_WINCOMPONENTS, it)
+            }
         }
         options.audioDriver.trim().takeIf { it.isNotEmpty() }?.let {
             overrides.put(OVERRIDE_AUDIO_DRIVER, it)
@@ -138,6 +142,8 @@ object WinlatorContract {
             }
         }
         if (overrides.length() > 0) put(EXTRA_OVERRIDES, overrides.toString())
-        if (options.save) put(EXTRA_SAVE, true)
+        // 接收端持久化 envVars 时是整体替换容器变量（不是追加），会和界面文案相反地丢配置；
+        // 在接收端改为按 key 合并前，带 envVars 的启动不写 save。
+        if (options.save && options.envVars.trim().isEmpty()) put(EXTRA_SAVE, true)
     }
 }

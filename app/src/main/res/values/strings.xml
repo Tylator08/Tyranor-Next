@@ -452,7 +452,7 @@
     <string name="engine_settings_winlator_shortcut_summary">留空 = 按启动文件名自动匹配；填写 Winlator 中显示的快捷方式名（不含 .desktop）</string>
     <string name="engine_settings_winlator_shortcut_auto">自动匹配（按启动文件名）</string>
     <string name="engine_settings_winlator_shortcut_container_id_title">快捷方式容器 ID</string>
-    <string name="engine_settings_winlator_shortcut_container_id_summary">快捷方式启动使用的容器 ID；0 或留空按容器 1</string>
+    <string name="engine_settings_winlator_shortcut_container_id_summary">快捷方式启动使用的容器 ID；留空时依次沿用逐游戏容器 ID、全局容器 ID，最后才是容器 1</string>
     <string name="engine_settings_winlator_shortcut_container_default">默认容器 1</string>
     <string name="engine_settings_winlator_shortcut_note">快捷方式启动只打开 Winlator 里已存在的 .desktop，不下发图形/运行参数，也不写回容器配置。名称留空时按启动文件名或游戏标题推导；多容器需明确填写容器 ID。</string>
     <string name="engine_settings_winlator_screen_size_title">分辨率</string>

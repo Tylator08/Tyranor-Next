@@ -452,7 +452,7 @@
     <string name="engine_settings_winlator_shortcut_summary">Empty = match the launch file name; enter the shortcut name shown in Winlator (without .desktop)</string>
     <string name="engine_settings_winlator_shortcut_auto">Auto (launch file name)</string>
     <string name="engine_settings_winlator_shortcut_container_id_title">Shortcut container ID</string>
-    <string name="engine_settings_winlator_shortcut_container_id_summary">Container ID used for shortcut launch; 0 or empty = container 1</string>
+    <string name="engine_settings_winlator_shortcut_container_id_summary">Container ID used for shortcut launch; when empty it falls back to the per-game ID, then the global ID, then container 1</string>
     <string name="engine_settings_winlator_shortcut_container_default">Container 1 (default)</string>
     <string name="engine_settings_winlator_shortcut_note">Shortcut launch only opens an existing .desktop in Winlator; it sends no graphics/runtime parameters and writes no container config. When the name is empty it falls back to the launch file name or the game title; multiple containers need an explicit ID.</string>
     <string name="engine_settings_winlator_screen_size_title">Resolution</string>

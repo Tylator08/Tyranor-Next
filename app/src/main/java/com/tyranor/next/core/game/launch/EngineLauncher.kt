@@ -1038,7 +1038,7 @@ object EngineLauncher {
                     ?.takeIf { it.launchStyle == EmulatorLaunchStyle.WINLATOR_EXTERNAL }
                     ?: return@withContext LaunchResult.Failure.StartFailed(null)
                 val path = resolveGameDirectory(context, game)
-                path?.let { requestAllFilesAccessIfNeeded(context, game, it)?.let { failure -> return@withContext failure } }
+                // 显式快捷方式不需要目录读取权限：名称推导失败时按游戏标题兜底，也不拦启动。
                 val shortcutContainerId = PerGameSettingsStore.getStr(
                     context,
                     game.uri,
@@ -1074,6 +1074,7 @@ object EngineLauncher {
                     .ifEmpty { "shortcut" }
                 val shortcutPath = "/data/data/${WinlatorContract.PACKAGE_NAME}/files/rootfs/home/xuser-$resolvedContainerId" +
                     "/.wine/drive_c/users/xuser/Desktop/$name.desktop"
+                currentCoroutineContext().ensureActive()
                 val result = ExternalEmulatorLauncher.launchWinlatorShortcut(
                     context = context,
                     target = target,

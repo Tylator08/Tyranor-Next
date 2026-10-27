@@ -1059,6 +1059,17 @@ object EngineSettingsStore {
             values[key]?.let { "$key=$it" }
         }.joinToString(",")
 
+    /**
+     * 是否为「九项齐全」的组件串。
+     *
+     * winlator-cn 当前按位置比较新旧串，部分串会错位跳过组件并污染已应用缓存，
+     * 因此只在九项都显式给出时才允许下发；不含 `container` 哨兵。
+     */
+    fun isCompleteWinlatorWinComponents(compact: String): Boolean {
+        val values = parseWinlatorWinComponents(compact)
+        return WINLATOR_WIN_COMPONENT_KEYS.all { values[it] == WINLATOR_WIN_COMPONENT_BUILTIN || values[it] == WINLATOR_WIN_COMPONENT_NATIVE }
+    }
+
     /** 全局 Winlator 组件覆盖：仅保留 `0`/`1`（空串 = 全部跟随容器配置）。 */
     fun normalizeWinlatorWinComponents(v: String?): String =
         encodeWinlatorWinComponents(parseWinlatorWinComponents(v))
