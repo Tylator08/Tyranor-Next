@@ -32,7 +32,8 @@
 所有 PR 以 personal-v2 为目标；有依赖的 PR 依次合并后再切下一条，避免同文件重复冲突。
 
 1. docs/personal-v2-migration-plan -> personal-v2（本 PR）
-2. feat/winlator-personal-extensions -> personal-v2
+2a. feat/winlator-personal-core -> personal-v2（M1 核心，已完成 PR #4）
+2b. feat/winlator-personal-ui -> personal-v2（M1 设置页 UI，待 M1-core 合并）
 3. feat/cover-binding-progress -> personal-v2
 4. feat/cover-blur -> personal-v2
 5. feat/page-wallpaper -> personal-v2
@@ -86,4 +87,4 @@ M2 与 M4 分两个 PR；M4 依赖 M2 的封面卡片入口。M1 与 M5 都改 P
 - personal 未改，备份 tag 已推送。
 - personal-v2 已从官方 main 建立并推送。
 - 本 PR 只提交迁移方案，不含代码移植。
-- 下一步：M1 Winlator 扩展 PR。
+- 下一步：M1-UI 设置页接入；M1-core PR #4 等待审核合并。
