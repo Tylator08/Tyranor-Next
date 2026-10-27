@@ -138,12 +138,18 @@ object PerGameSettingsStore {
     const val WINLATOR_MODE_CUSTOM = "custom"
     const val F_WINLATOR_CONTAINER_ID = "winlator_container_id"
     const val F_WINLATOR_CONTAINER_NAME = "winlator_container_name"
+    const val F_WINLATOR_SHORTCUT = "winlator_shortcut"
+    const val F_WINLATOR_SHORTCUT_CONTAINER_ID = "winlator_shortcut_container_id"
     const val F_WINLATOR_GRAPHICS_DRIVER = "winlator_graphics_driver"
     const val F_WINLATOR_DXWRAPPER = "winlator_dxwrapper"
+    const val F_WINLATOR_WINED3D_RENDERER = "winlator_wined3d_renderer"
     const val F_WINLATOR_SCREEN_SIZE = "winlator_screen_size"
     const val F_WINLATOR_LC_ALL = "winlator_lc_all"
     const val F_WINLATOR_TZ = "winlator_tz"
     const val F_WINLATOR_BOX64_PRESET = "winlator_box64_preset"
+    const val F_WINLATOR_WIN_COMPONENTS = "winlator_win_components"
+    const val F_WINLATOR_AUDIO_DRIVER = "winlator_audio_driver"
+    const val F_WINLATOR_ENV_VARS = "winlator_env_vars"
     const val F_WINLATOR_SAVE = "winlator_save"
 
     // Ren'Py 外置模块配置（settings extra 的 renpy 节 + app.cheats，null=跟随全局）
@@ -305,7 +311,7 @@ object PerGameSettingsStore {
     }
 
     /**
-     * 1.61 的六个旧参数键：只用于「六键都存在且全为空串 → 跟随容器」的迁移判定。
+     * 1.61 的六个旧参数键：只用于「六键都存在且全为空串 -> 跟随容器」的迁移判定。
      * 新增覆盖字段时不要动这个列表，否则历史记录会被误判。
      */
     private val LEGACY_CONTAINER_FIELDS = listOf(
@@ -328,38 +334,33 @@ object PerGameSettingsStore {
         F_WINLATOR_LC_ALL,
         F_WINLATOR_TZ,
         F_WINLATOR_BOX64_PRESET,
+        F_WINLATOR_WINED3D_RENDERER,
+        F_WINLATOR_WIN_COMPONENTS,
+        F_WINLATOR_AUDIO_DRIVER,
+        F_WINLATOR_ENV_VARS,
     )
 
-    /**
-     * 单游戏运行模式：global（默认）/ container / custom。
-     * 旧数据严格按 1.61 的 null / "" / 值语义迁移。
-     */
+    /** 单游戏运行模式：global（默认）/ container / custom。旧数据按 1.61 的 null / "" / 值语义迁移。 */
     fun getWinlatorMode(context: Context, gameId: String): String = inferWinlatorMode(load(context, gameId))
 
-    /** [getWinlatorMode] 的纯函数部分：按 1.61 的 null / "" / 值语义推断模式，便于 JVM 回归。 */
+    /** [getWinlatorMode] 的纯函数部分。 */
     internal fun inferWinlatorMode(json: JSONObject): String {
         val mode = json.optString(F_WINLATOR_MODE, "")
         if (mode == WINLATOR_MODE_GLOBAL || mode == WINLATOR_MODE_CONTAINER || mode == WINLATOR_MODE_CUSTOM) {
             return mode
         }
-        // 未知的非空 mode 不直接判全局：继续走下面的字段推断，尽量保留可解释的旧数据。
-
+        // 未知的非空 mode 不直接判全局：继续走字段推断，尽量保留可解释的旧数据。
         val legacyPresent = LEGACY_CONTAINER_FIELDS.filter { json.has(it) }
         val legacyAllBlank =
             legacyPresent.size == LEGACY_CONTAINER_FIELDS.size &&
                 LEGACY_CONTAINER_FIELDS.all { json.optString(it).isEmpty() }
-        // 任一当前覆盖字段有值即自定义；用当前字段清单而不是「旧六键数量」，避免新增字段被漏判。
         val anyNonEmptyCurrent = CURRENT_OVERRIDE_FIELDS.any { json.has(it) && json.optString(it).isNotEmpty() }
         if (anyNonEmptyCurrent) return WINLATOR_MODE_CUSTOM
-        // 六个旧参数全空是「跟随容器」的强信号，必须优先于单独出现的容器字段判断：
-        // 这类记录在 1.61 里本来就走容器基线，若判成 custom 会把 save 继承成全局值。
         if (legacyAllBlank) return WINLATOR_MODE_CONTAINER
         if (legacyPresent.isNotEmpty()) return WINLATOR_MODE_CUSTOM
         if (json.has(F_WINLATOR_CONTAINER_ID) || json.has(F_WINLATOR_CONTAINER_NAME)) {
             return WINLATOR_MODE_CUSTOM
         }
-        // save 是真实的逐游戏覆盖（仅「自定义」模式写入）：只有它一条的旧记录不能回落到全局，
-        // 否则会丢掉玩家原有的「写回容器配置」。
         if (json.has(F_WINLATOR_SAVE)) return WINLATOR_MODE_CUSTOM
         return WINLATOR_MODE_GLOBAL
     }
@@ -367,6 +368,14 @@ object PerGameSettingsStore {
     fun setWinlatorMode(context: Context, gameId: String, mode: String) {
         setStr(context, gameId, F_WINLATOR_MODE, mode)
     }
+
+    fun isWinlatorCustom(context: Context, gameId: String): Boolean =
+        getWinlatorMode(context, gameId) == WINLATOR_MODE_CUSTOM
+
+    /** 是否已经显式保存过新模式；旧配置没有该键时仍按旧「全局 -> 覆盖」语义解析。 */
+    fun hasWinlatorMode(context: Context, gameId: String): Boolean =
+        load(context, gameId).has(F_WINLATOR_MODE)
+
 
     /**
      * Winlator 外置启动覆盖快照 → 类型化模型（缺失字段=跟随全局；存在但为空串=显式不下发该参数，
@@ -383,10 +392,14 @@ object PerGameSettingsStore {
             containerName = strOrNull(F_WINLATOR_CONTAINER_NAME),
             graphicsDriver = strOrNull(F_WINLATOR_GRAPHICS_DRIVER),
             dxwrapper = strOrNull(F_WINLATOR_DXWRAPPER),
+            wined3dRenderer = strOrNull(F_WINLATOR_WINED3D_RENDERER),
             screenSize = strOrNull(F_WINLATOR_SCREEN_SIZE),
             lcAll = strOrNull(F_WINLATOR_LC_ALL),
             tz = strOrNull(F_WINLATOR_TZ),
             box64Preset = strOrNull(F_WINLATOR_BOX64_PRESET),
+            winComponents = strOrNull(F_WINLATOR_WIN_COMPONENTS),
+            audioDriver = strOrNull(F_WINLATOR_AUDIO_DRIVER),
+            envVars = strOrNull(F_WINLATOR_ENV_VARS),
             save = boolOrNull(F_WINLATOR_SAVE),
         )
         return override.takeIf { it != WinlatorOverride() }

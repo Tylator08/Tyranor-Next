@@ -22,6 +22,9 @@ object WinlatorContract {
     /** 可执行文件：绝对路径（DOS/Unix/file://）或相对 [EXTRA_DIR_PATH] 的文件名。 */
     const val EXTRA_EXE_PATH = "exe_path"
 
+    /** 已存在的 Winlator 快捷方式（`.desktop`）绝对路径；与 `dir_path`/`exe_path` 互斥。 */
+    const val EXTRA_SHORTCUT_PATH = "shortcut_path"
+
     /** 是否弹 Winlator 侧确认框（默认 true；`false` 仅在对方全局设置允许时生效）。 */
     const val EXTRA_CONFIRM = "confirm"
 
@@ -57,6 +60,17 @@ object WinlatorContract {
 
     /** overrides 中由本 App 下发的键。 */
     const val OVERRIDE_BOX64_PRESET = "box64Preset"
+
+    /** overrides 中的 Win Components（内置 Wine / 外置 Windows）紧凑串。 */
+    const val OVERRIDE_WINCOMPONENTS = "wincomponents"
+
+    /** overrides 中的音频驱动（alsa / pulseaudio）。 */
+    const val OVERRIDE_AUDIO_DRIVER = "audioDriver"
+
+    /** overrides 中的自定义环境变量（空格分隔 K=V）。 */
+    const val OVERRIDE_ENV_VARS = "envVars"
+
+    /** overrides 中的 DX wrapper 配置（WineD3D 的 `renderer=...` 走这里）。 */
     const val OVERRIDE_DXWRAPPER_CONFIG = "dxwrapperConfig"
 
     /** App-only presets; both map to the existing `wined3d` protocol identifier. */
@@ -71,10 +85,14 @@ object WinlatorContract {
         val containerName: String = "",
         val graphicsDriver: String = "",
         val dxwrapper: String = "",
+        val wined3dRenderer: String = "",
         val screenSize: String = "",
         val lcAll: String = "",
         val tz: String = "",
         val box64Preset: String = "",
+        val winComponents: String = "",
+        val audioDriver: String = "",
+        val envVars: String = "",
         val save: Boolean = false,
     )
 
@@ -82,7 +100,7 @@ object WinlatorContract {
      * 设置项 → Intent extras 的纯函数映射（不含 `dir_path`/`exe_path`/`confirm`/`launch_id`）。
      * 值为 Int/Boolean 时按原类型传入，其余为 String；用于单测覆盖下发规则。
      * 显式 GL/GDI 预设映射为 WineD3D，并整项替换接收端渲染配置；旧 WineD3D 保留容器渲染器。
-     * 渲染配置与 Box64 预设共用一个 overrides 对象，save 为 true 时由接收端持久化覆盖值。
+     * 渲染配置、Box64、Win Components、音频与环境变量共用一个 overrides 对象。
      */
     fun extras(options: LaunchOptions): Map<String, Any> = buildMap {
         if (options.containerId > 0) put(EXTRA_CONTAINER_ID, options.containerId)
@@ -93,8 +111,13 @@ object WinlatorContract {
             DXWRAPPER_WINED3D_GL, DXWRAPPER_WINED3D_GDI -> {
                 put(EXTRA_DXWRAPPER, "wined3d")
                 val renderer = if (wrapper == DXWRAPPER_WINED3D_GDI) "gdi" else "gl"
-                // WineD3D uses the first config slot; this replaces the whole container config.
                 overrides.put(OVERRIDE_DXWRAPPER_CONFIG, "renderer=$renderer")
+            }
+            "wined3d" -> {
+                put(EXTRA_DXWRAPPER, "wined3d")
+                options.wined3dRenderer.trim().takeIf { it.isNotEmpty() }?.let {
+                    overrides.put(OVERRIDE_DXWRAPPER_CONFIG, "renderer=$it")
+                }
             }
             "" -> Unit
             else -> put(EXTRA_DXWRAPPER, wrapper)
@@ -104,6 +127,15 @@ object WinlatorContract {
         options.tz.trim().takeIf { it.isNotEmpty() }?.let { put(EXTRA_TZ, it) }
         options.box64Preset.trim().takeIf { it.isNotEmpty() }?.let {
             overrides.put(OVERRIDE_BOX64_PRESET, it)
+        }
+        options.winComponents.trim().takeIf { it.isNotEmpty() }?.let {
+            overrides.put(OVERRIDE_WINCOMPONENTS, it)
+        }
+        options.audioDriver.trim().takeIf { it.isNotEmpty() }?.let {
+            overrides.put(OVERRIDE_AUDIO_DRIVER, it)
+        }
+        options.envVars.trim().takeIf { it.isNotEmpty() }?.let {
+            overrides.put(OVERRIDE_ENV_VARS, it)
         }
         if (overrides.length() > 0) put(EXTRA_OVERRIDES, overrides.toString())
         if (options.save) put(EXTRA_SAVE, true)

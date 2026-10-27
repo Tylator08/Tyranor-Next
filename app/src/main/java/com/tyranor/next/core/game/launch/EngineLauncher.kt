@@ -974,11 +974,15 @@ object EngineLauncher {
      * Windows 游戏（YU-RIS / 手动添加的 PC）经外置 Winlator 启动：解析游戏目录真实路径 →
      * 解析主 exe（`launchFile` 优先）→ 交给 Winlator 挂载目录（自动空闲盘符）并按相对文件名启动。
      * 运行参数由 Winlator 管理，主 App 只负责识别与跳转。
+     *
+     * [configureShortcut] = true 时强制 `save=true`，把本游戏的三级 Winlator 配置写回
+     * Winlator 的容器/快捷方式，且不写入「最近游戏」——供游戏操作里的「Winlator 启动」使用。
      */
     private suspend fun launchWindowsViaWinlator(
         context: Context,
         game: ScanGame,
         target: ExternalEmulatorTarget,
+        configureShortcut: Boolean = false,
     ): LaunchResult {
         val path = resolveGameDirectory(context, game) ?: return LaunchResult.Failure.GameDirUnresolved
         requestAllFilesAccessIfNeeded(context, game, path)?.let { return it }
@@ -997,19 +1001,79 @@ object EngineLauncher {
                 containerName = winlator.containerName,
                 graphicsDriver = winlator.graphicsDriver,
                 dxwrapper = winlator.dxwrapper,
+                wined3dRenderer = winlator.wined3dRenderer,
                 screenSize = winlator.screenSize,
                 lcAll = winlator.lcAll,
                 tz = winlator.tz,
                 box64Preset = winlator.box64Preset,
-                save = winlator.save,
+                winComponents = winlator.winComponents,
+                audioDriver = winlator.audioDriver,
+                envVars = winlator.envVars,
+                save = winlator.save || configureShortcut,
             ),
         )
         if (result.success) {
-            GameLibraryFacade.recordRecentGame(context, game)
+            if (!configureShortcut) GameLibraryFacade.recordRecentGame(context, game)
             return LaunchResult.Success
         }
         return LaunchResult.Failure.ExternalEmulatorFailed(result)
     }
+
+    /**
+     * 打开本游戏在 Winlator 中**已存在的快捷方式**（不重新下发 exe/参数、不写容器配置）。
+     *
+     * 快捷方式文件在 Winlator 私有目录，路径按 Winlator 的固定结构构造：
+     * `/data/data/com.winlator/files/rootfs/home/xuser-<containerId>/.wine/drive_c/users/xuser/Desktop/<name>.desktop`。
+     * 名称优先取单游戏「Winlator 快捷方式」覆盖值，留空则用启动文件名（无扩展名）自动匹配。
+     * 容器 ID 未指定时按 Winlator 的默认首个容器（1）尝试；多容器用户需在单游戏设置里明确填写。
+     *
+     * 启动优先级低于 [launch]（引擎设置启动）：只在用户显式选择该入口时调用。
+     */
+    suspend fun openWinlatorShortcut(context: Context, game: ScanGame): LaunchResult =
+        withContext(Dispatchers.IO) {
+            val target = ExternalEmulatorRegistry.forEngine(game.engine)
+                ?.takeIf { it.launchStyle == EmulatorLaunchStyle.WINLATOR_EXTERNAL }
+                ?: return@withContext LaunchResult.Failure.StartFailed(null)
+            val path = resolveGameDirectory(context, game)
+            // 快捷方式启动使用独立的容器 ID；未填时按 Winlator 默认容器 1。
+            val shortcutContainerId = PerGameSettingsStore.getStr(
+                context,
+                game.uri,
+                PerGameSettingsStore.F_WINLATOR_SHORTCUT_CONTAINER_ID,
+            )?.trim()?.toIntOrNull() ?: 0
+            val containerId = shortcutContainerId.takeIf { it > 0 } ?: 1
+            val explicitName = PerGameSettingsStore.getStr(
+                context,
+                game.uri,
+                PerGameSettingsStore.F_WINLATOR_SHORTCUT,
+            )?.trim()
+                ?.removeSuffix(".desktop")
+                ?.replace('/', '_')
+                ?.replace('\\', '_')
+                ?.trim()
+            val exeBase = path
+                ?.let { YurisLaunchFiles.resolveExeName(game, it) }
+                ?.substringBeforeLast('.')
+                ?.takeIf { it.isNotBlank() }
+            val name = (explicitName?.takeIf { it.isNotEmpty() } ?: exeBase ?: game.title)
+                .replace('/', '_')
+                .replace('\\', '_')
+            val shortcutPath = "/data/data/${WinlatorContract.PACKAGE_NAME}/files/rootfs/home/xuser-$containerId" +
+                "/.wine/drive_c/users/xuser/Desktop/$name.desktop"
+            val result = ExternalEmulatorLauncher.launchWinlatorShortcut(
+                context = context,
+                target = target,
+                containerId = containerId,
+                shortcutPath = shortcutPath,
+                launchId = game.uri,
+            )
+            if (result.success) {
+                GameLibraryFacade.recordRecentGame(context, game)
+                LaunchResult.Success
+            } else {
+                LaunchResult.Failure.ExternalEmulatorFailed(result)
+            }
+        }
 
     /**
      * Siglus 启动：真实路径 + 语言覆盖 + 标题回写定位哈希。

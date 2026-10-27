@@ -82,6 +82,10 @@ internal object GameOverridePartitions {
     const val KEY_WINLATOR_LC_ALL = "winlator_lc_all"
     const val KEY_WINLATOR_TZ = "winlator_tz"
     const val KEY_WINLATOR_BOX64_PRESET = "winlator_box64_preset"
+    const val KEY_WINLATOR_WINED3D_RENDERER = "winlator_wined3d_renderer"
+    const val KEY_WINLATOR_WIN_COMPONENTS = "winlator_win_components"
+    const val KEY_WINLATOR_AUDIO_DRIVER = "winlator_audio_driver"
+    const val KEY_WINLATOR_ENV_VARS = "winlator_env_vars"
     const val KEY_WINLATOR_SAVE = "winlator_save"
     const val KEY_RENPY_VERSION = "renpy_engine_version"
     // Siglus 无独立分区：语言覆盖随 tyrano 分区持久化（与 RPG Maker 会话键同策略）
@@ -147,6 +151,8 @@ internal object GameOverridePartitions {
         KEY_WINLATOR_CONTAINER_ID, KEY_WINLATOR_CONTAINER_NAME,
         KEY_WINLATOR_GRAPHICS_DRIVER, KEY_WINLATOR_DXWRAPPER, KEY_WINLATOR_SCREEN_SIZE,
         KEY_WINLATOR_LC_ALL, KEY_WINLATOR_TZ, KEY_WINLATOR_BOX64_PRESET, KEY_WINLATOR_SAVE,
+        KEY_WINLATOR_WINED3D_RENDERER, KEY_WINLATOR_WIN_COMPONENTS,
+        KEY_WINLATOR_AUDIO_DRIVER, KEY_WINLATOR_ENV_VARS,
         KEY_RPG_MAKER_MOD_ENABLED, KEY_RPG_SAVE_INTEROP,
         KEY_RPG_LEGACY_RENDERER, KEY_RPG_MV_VERSION, KEY_RPG_MZ_VERSION,
         KEY_INPUT_PAD_ENABLED, KEY_INPUT_GAMEPAD_ENABLED, KEY_INPUT_PROFILE_ID,
