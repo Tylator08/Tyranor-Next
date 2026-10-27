@@ -437,7 +437,9 @@
     <string name="engine_settings_winlator_win_component_builtin">内置（Wine）</string>
     <string name="engine_settings_winlator_win_component_native">外置（Windows）</string>
     <string name="engine_settings_winlator_win_component_unknown">未知组件</string>
-    <string name="engine_settings_winlator_win_component_note">内置由 Wine 自带实现；外置使用容器内的 Windows 组件。选「跟随容器」时不下发该项，交由 Winlator 处理；标注「无需调整」的项保持默认即可。修改后需退出当前游戏并重新启动；若仍未生效，请重启 Winlator。</string>
+    <string name="engine_settings_winlator_win_components_incomplete">组件覆盖需要九项全部显式选择才会下发；当前只选了部分项，整组不会生效（沿用容器配置）。</string>
+    <string name="engine_settings_winlator_save_suppressed_by_env">存在自定义环境变量时不会写回容器配置（接收端会整体替换容器变量），本次覆盖仅会话生效。</string>
+    <string name="engine_settings_winlator_win_component_note">内置由 Wine 自带实现；外置使用容器内的 Windows 组件。组件覆盖需要九项全部显式选择才会整组下发；只改部分项时整组不生效（沿用容器配置）。修改后需退出当前游戏并重新启动；若仍未生效，请重启 Winlator。</string>
     <string name="engine_settings_winlator_win_component_direct3d">D3D 运行库（direct3d）</string>
     <string name="engine_settings_winlator_win_component_directsound">声音播放（directsound）</string>
     <string name="engine_settings_winlator_win_component_directmusic">音乐播放（directmusic）</string>
@@ -460,7 +462,7 @@
     <string name="engine_settings_winlator_tz_title">时区（TZ）</string>
     <string name="engine_settings_winlator_box64_preset_title">Box64 预设</string>
     <string name="engine_settings_winlator_save_title">写入容器配置</string>
-    <string name="engine_settings_winlator_save_summary">把本次参数写入 Winlator 容器配置（save=true），使其长期生效</string>
+    <string name="engine_settings_winlator_save_summary">把本次参数写入 Winlator 容器配置（save=true），使其长期生效；存在自定义环境变量时不会写回，仅本次会话生效</string>
     <string name="engine_settings_winlator_note">仅对经外置 Winlator 启动的游戏生效（YU-RIS / CatSystem2 / 手动添加的 PC）；参数在跳转时下发，留空项跟随容器配置。「图形加速」选 WineD3D 时可再选渲染器，该渲染器会整项替换容器的 WineD3D 配置，其它子参数使用默认值；开启「写入容器配置」时也会保存这些参数。</string>
     <string name="engine_settings_scoped_save_dir">独立存档目录</string>
     <string name="engine_settings_skip_startup_dialogs">屏蔽游戏启动弹窗</string>

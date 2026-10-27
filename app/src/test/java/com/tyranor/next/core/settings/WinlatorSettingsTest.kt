@@ -1,6 +1,8 @@
 package com.tyranor.next.core.settings
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
@@ -88,6 +90,26 @@ class WinlatorSettingsTest {
         )
         assertEquals("", EngineSettingsStore.mergeWinlatorWinComponents("direct3d=1", ""))
         assertEquals("direct3d=1", EngineSettingsStore.mergeWinlatorWinComponents("direct3d=1", null))
+    }
+
+    /** 组件完整性门禁：九项不齐时不下发，UI 与下发共用同一条判定。 */
+    @Test
+    fun winComponentsCompletenessRequiresAllNine() {
+        assertFalse(EngineSettingsStore.isCompleteWinlatorWinComponents("directshow=1"))
+        assertFalse(
+            EngineSettingsStore.isCompleteWinlatorWinComponents(
+                EngineSettingsStore.encodeWinlatorWinComponents(
+                    EngineSettingsStore.WINLATOR_WIN_COMPONENT_KEYS.dropLast(1).associateWith { "1" },
+                ),
+            ),
+        )
+        assertTrue(
+            EngineSettingsStore.isCompleteWinlatorWinComponents(
+                EngineSettingsStore.encodeWinlatorWinComponents(
+                    EngineSettingsStore.WINLATOR_WIN_COMPONENT_KEYS.associateWith { "1" },
+                ),
+            ),
+        )
     }
 
     /** Box64 预设接受内置名称与 CUSTOM 编号，未知名称不下发。 */

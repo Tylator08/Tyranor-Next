@@ -437,7 +437,9 @@
     <string name="engine_settings_winlator_win_component_builtin">Builtin (Wine)</string>
     <string name="engine_settings_winlator_win_component_native">Native (Windows)</string>
     <string name="engine_settings_winlator_win_component_unknown">Unknown component</string>
-    <string name="engine_settings_winlator_win_component_note">Builtin uses Wine\'s own implementation; native uses the Windows components installed in the container. Choosing \"follow container config\" sends no value for that item and lets Winlator decide; items marked \"no adjustment needed\" can stay at their default. Restart the game after changes.</string>
+    <string name="engine_settings_winlator_win_components_incomplete">Win Components are only sent when all nine are explicitly selected; with a partial selection the whole group is ignored (container config stays in effect).</string>
+    <string name="engine_settings_winlator_save_suppressed_by_env">Custom environment variables prevent writing back to the container config (the receiver replaces container variables), so these overrides apply to this session only.</string>
+    <string name="engine_settings_winlator_win_component_note">Builtin uses Wine\'s own implementation; native uses the Windows components installed in the container. Component overrides are only sent when all nine are explicitly selected; changing only some items makes the whole group inactive (container config stays in effect). Restart the game after changes.</string>
     <string name="engine_settings_winlator_win_component_direct3d">D3D runtime (direct3d)</string>
     <string name="engine_settings_winlator_win_component_directsound">Sound playback (directsound)</string>
     <string name="engine_settings_winlator_win_component_directmusic">Music playback (directmusic)</string>
@@ -460,7 +462,7 @@
     <string name="engine_settings_winlator_tz_title">Time zone (TZ)</string>
     <string name="engine_settings_winlator_box64_preset_title">Box64 preset</string>
     <string name="engine_settings_winlator_save_title">Write to container config</string>
-    <string name="engine_settings_winlator_save_summary">Persist these parameters into the Winlator container config (save=true) instead of this session only</string>
+    <string name="engine_settings_winlator_save_summary">Persist these parameters into the Winlator container config (save=true) instead of this session only; with custom environment variables nothing is written back</string>
     <string name="engine_settings_winlator_note">Applies only to games launched through external Winlator (YU-RIS / CatSystem2 / manually added PC games). The parameters are sent when jumping; empty items follow the container config. When DX wrapper is WineD3D you can pick its renderer, which replaces the entire container WineD3D config; other sub-options use defaults. Enabling Write to container config also persists these parameters.</string>
     <string name="engine_settings_scoped_save_dir">Isolated save directory</string>
     <string name="engine_settings_skip_startup_dialogs">Block game launch pop-ups</string>

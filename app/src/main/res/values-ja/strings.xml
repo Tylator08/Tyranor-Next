@@ -437,7 +437,9 @@
     <string name="engine_settings_winlator_win_component_builtin">内蔵（Wine）</string>
     <string name="engine_settings_winlator_win_component_native">外付け（Windows）</string>
     <string name="engine_settings_winlator_win_component_unknown">不明なコンポーネント</string>
-    <string name="engine_settings_winlator_win_component_note">「内蔵」は Wine 自身の実装、「外付け」はコンテナ内の Windows コンポーネントを使用します。「コンテナ設定に従う」の項目は送信せず Winlator に委ねます。「調整不要」の項目は既定のままで問題ありません。変更後はゲームの再起動が必要です。</string>
+    <string name="engine_settings_winlator_win_components_incomplete">コンポーネントの上書きは 9 項目すべてを明示した場合のみ送信されます。一部だけの場合はグループ全体が無効になります（コンテナ設定のまま）。</string>
+    <string name="engine_settings_winlator_save_suppressed_by_env">カスタム環境変数がある場合はコンテナ設定へ書き戻しません（受信側がコンテナ変数を置き換えるため）。今回の上書きはセッション内のみ有効です。</string>
+    <string name="engine_settings_winlator_win_component_note">「内蔵」は Wine 自身の実装、「外付け」はコンテナ内の Windows コンポーネントを使用します。コンポーネントの上書きは 9 項目すべてを明示した場合のみ送信されます。一部だけ変更した場合はグループ全体が無効になります（コンテナ設定のまま）。変更後はゲームの再起動が必要です。</string>
     <string name="engine_settings_winlator_win_component_direct3d">D3D ランタイム（direct3d）</string>
     <string name="engine_settings_winlator_win_component_directsound">サウンド再生（directsound）</string>
     <string name="engine_settings_winlator_win_component_directmusic">音楽再生（directmusic）</string>
@@ -460,7 +462,7 @@
     <string name="engine_settings_winlator_tz_title">タイムゾーン（TZ）</string>
     <string name="engine_settings_winlator_box64_preset_title">Box64 プリセット</string>
     <string name="engine_settings_winlator_save_title">コンテナ設定に書き込む</string>
-    <string name="engine_settings_winlator_save_summary">今回のパラメータを Winlator のコンテナ設定に書き込み（save=true）、恒久的に適用します</string>
+    <string name="engine_settings_winlator_save_summary">今回のパラメータを Winlator のコンテナ設定に書き込み（save=true）、恒久的に適用します。カスタム環境変数がある場合は書き戻しません</string>
     <string name="engine_settings_winlator_note">外部 Winlator で起動するゲーム（YU-RIS / CatSystem2 / 手動追加の PC）にのみ適用されます。パラメータはジャンプ時に送信され、空欄の項目はコンテナ設定に従います。「グラフィックアクセラレーション」が WineD3D のときはレンダラーを選択でき、WineD3D 設定全体が置き換わります（他の詳細項目は既定値）。「コンテナ設定に書き込む」が有効なら、これらのパラメータも保存されます。</string>
     <string name="engine_settings_scoped_save_dir">個別セーブフォルダ</string>
     <string name="engine_settings_skip_startup_dialogs">ゲーム起動時のポップアップを非表示</string>

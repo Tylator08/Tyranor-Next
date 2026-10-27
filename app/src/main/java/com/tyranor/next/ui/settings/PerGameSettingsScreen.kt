@@ -1496,6 +1496,21 @@ fun PerGameSettingsScreen(game: ScanGame) {
                                 )
                             }
                         }
+                        // 接收端按位置比较组件串：九项不齐时整组不下发，必须让用户看到这一点。
+                        val effectiveWinComponents = EngineSettingsStore.mergeWinlatorWinComponents(
+                            globalWinlator.winComponents,
+                            winlatorWinComponents,
+                        )
+                        if (effectiveWinComponents.isNotBlank() &&
+                            !EngineSettingsStore.isCompleteWinlatorWinComponents(effectiveWinComponents)
+                        ) {
+                            Text(
+                                stringResource(R.string.engine_settings_winlator_win_components_incomplete),
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
+                            )
+                        }
                         OverrideChoice(
                             stringResource(R.string.engine_settings_winlator_audio_driver_title),
                             winlatorAudioDriverMap,
@@ -1514,6 +1529,15 @@ fun PerGameSettingsScreen(game: ScanGame) {
                             globalWinlator.save,
                             winlatorSave,
                         ) { winlatorSave = it }
+                        // 生效环境变量非空时 save 会被整体省略（接收端会替换容器变量），提示仅会话生效。
+                        if ((winlatorEnvVars ?: globalWinlator.envVars).isNotBlank()) {
+                            Text(
+                                stringResource(R.string.engine_settings_winlator_save_suppressed_by_env),
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
+                            )
+                        }
                         Text(
                             stringResource(R.string.engine_settings_winlator_per_game_note),
                             style = MaterialTheme.typography.bodyMedium,

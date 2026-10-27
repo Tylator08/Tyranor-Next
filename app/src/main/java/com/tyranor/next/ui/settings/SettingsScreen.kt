@@ -1579,6 +1579,18 @@ private fun LazyListPlaceholder(
                         )
                     }
                 }
+                val effectiveComponents =
+                    EngineSettingsStore.normalizeWinlatorWinComponents(winlator.winComponents)
+                if (effectiveComponents.isNotBlank() &&
+                    !EngineSettingsStore.isCompleteWinlatorWinComponents(effectiveComponents)
+                ) {
+                    Text(
+                        stringResource(R.string.engine_settings_winlator_win_components_incomplete),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MiuixTheme.colorScheme.onBackground,
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                    )
+                }
                 DropdownRow(
                     stringResource(R.string.engine_settings_winlator_audio_driver_title),
                     winlatorAudioDriverOptions(),
@@ -1603,6 +1615,14 @@ private fun LazyListPlaceholder(
                     checked = winlator.save,
                     onCheckedChange = { onWinlator(winlator.copy(save = it)) },
                 )
+                if (winlator.envVars.isNotBlank()) {
+                    Text(
+                        stringResource(R.string.engine_settings_winlator_save_suppressed_by_env),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MiuixTheme.colorScheme.onBackground,
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                    )
+                }
                 Text(
                     stringResource(R.string.engine_settings_winlator_note),
                     style = MaterialTheme.typography.bodyMedium,
